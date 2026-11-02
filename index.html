@@ -5823,7 +5823,7 @@ const pubIdOf=d=>'u-'+DEV.id+'-'+d.kind+(d.kind==='item'?'-'+String(d.id).replac
 async function sbFetch(path,opt={}){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),8000);
   try{const r=await fetch(SB.url+path,{...opt,signal:ctl.signal,headers:{apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json',...(opt.headers||{})}});
-    if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,200));return r.status===204?null:r.json()}finally{clearTimeout(t)}}
+    const txt=await r.text();if(!r.ok)throw new Error(r.status+' '+txt.slice(0,200));return txt?JSON.parse(txt):null}finally{clearTimeout(t)}}
 SB.ready=(async()=>{try{
   const rows=await sbFetch('/rest/v1/posts?select=id,kind,data,updated_at&order=updated_at.desc&limit=400');
   SB.posts=rows.filter(r=>!r.id.startsWith('u-'+DEV.id+'-')).map(r=>({...r.data,id:r.id,kind:r.kind,mine:false,remote:true,updatedAt:Date.parse(r.updated_at)||r.data.updatedAt}));
