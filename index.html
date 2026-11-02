@@ -5899,10 +5899,14 @@ let _ssT=0;new MutationObserver(()=>{if(_ssT)return;_ssT=requestAnimationFrame((
   setFavicon();
   i18nStart();
   let back=null;try{back=JSON.parse(sessionStorage.getItem('roomer-lang-return')||'null');sessionStorage.removeItem('roomer-lang-return')}catch(e){}
-  if(back){window.HSLIDE=back.slide||0;view=VIEWS[back.view]?back.view:'landing';render();requestAnimationFrame(()=>window.scrollTo(0,back.y||0));return}
+  if(back){window.HSLIDE=back.slide||0;view=VIEWS[back.view]?back.view:'landing';try{sessionStorage.setItem('roomer-visit','1');history.replaceState(null,'',location.pathname+location.search)}catch(e){}render();requestAnimationFrame(()=>window.scrollTo(0,back.y||0));return}
   const h=decodeURIComponent(location.hash.slice(1));
   if(h.startsWith('post=')){view='explore';render();const id=h.slice(5),d=findPost(id);if(d)openSheet(d);else SB.ready.then(()=>{const d2=findPost(id);if(d2){render();openSheet(d2)}else toast(T('ไม่พบโพสต์นี้ อาจถูกปิดหรือลบไปแล้ว','This post was not found. It may have been closed or removed.'))});return}
-  view=VIEWS[h]?h:'landing';
+  /* a fresh visit always opens the landing page, even if the address still carries an old #view
+     (left there by a language switch or a copied address). A reload inside the same visit keeps the view. */
+  let again=false;try{again=sessionStorage.getItem('roomer-visit')==='1';sessionStorage.setItem('roomer-visit','1')}catch(e){}
+  view=again&&VIEWS[h]?h:'landing';
+  if(location.hash&&!again)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
   render();
 })();
 
