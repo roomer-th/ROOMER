@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>ROOMER · ตัวอย่างแผนที่</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+/* layout: option tabs on top, the map as the hero, a short note about the chosen style underneath */
+:root{--bg:#F6F4FC;--fg:#1F1C3B;--mut:#6B6789;--line:#E4E0F2;--card:#fff;--brand:#6D4AE8;--brand-soft:#EEE9FE;
+  --room:#7C5CFC;--owner:#E0A100;--seek:#F26B4F;--pair:#2F9BE6;--item:#22A660;
+  --display:Prompt,"IBM Plex Sans Thai",system-ui,sans-serif;--body:"IBM Plex Sans Thai",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left)) 40px max(16px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:4px}
+header p{margin:0;color:var(--mut);font-size:13px;letter-spacing:.04em}
+h1{margin:0;font-family:var(--display);font-size:clamp(22px,3.2vw,30px);text-wrap:balance}
+.lead{margin:0;color:var(--mut);max-width:70ch;line-height:1.6}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--card);color:var(--fg);font:inherit;padding:10px 14px;border-radius:14px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:150px}
+.tab b{font-family:var(--display);font-weight:600;font-size:15px}
+.tab small{color:var(--mut);font-size:12px}
+.tab[aria-pressed=true]{border-color:var(--brand);background:var(--brand-soft)}
+.tab:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--mut);cursor:pointer}
+.stage{display:flex;justify-content:center}
+.frame{position:relative;width:100%;height:min(68vh,640px);border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(40,30,120,.16);background:#ddd;transition:width .25s,height .25s}
+.stage.phone .frame{width:390px;max-width:100%;height:760px;border-radius:36px;border:10px solid #1F1C3B}
+#map{position:absolute;inset:0}
+.legend{position:absolute;left:12px;bottom:12px;z-index:2;background:rgba(255,255,255,.94);border-radius:14px;padding:8px 12px;display:grid;grid-template-columns:repeat(2,auto);gap:4px 14px;font-size:12px;box-shadow:0 6px 18px rgba(40,30,120,.12)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.dark .legend{background:rgba(31,26,68,.92);color:#E8E4FF}
+.note{background:var(--card);border-radius:20px;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;box-shadow:0 4px 16px rgba(40,30,120,.06)}
+.note h2{grid-column:1/-1;margin:0;font-family:var(--display);font-size:19px}
+.note h3{margin:0 0 4px;font-size:13px;letter-spacing:.04em;color:var(--mut)}
+.note ul{margin:0;padding-left:18px;line-height:1.6}
+@media (max-width:640px){.note{grid-template-columns:1fr}.frame{height:62vh}}
+.foot{color:var(--mut);font-size:12.5px;line-height:1.6;margin:0}
+/* price pins — same look as the pins on the live site */
+.pin{font-family:var(--display);font-weight:600;font-size:13px;color:#fff;padding:4px 10px 4px 8px;border-radius:999px;display:flex;align-items:center;gap:5px;box-shadow:0 4px 12px rgba(30,20,80,.28);border:2px solid #fff;white-space:nowrap;cursor:pointer;transform:translateY(-4px)}
+.pin::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;opacity:.9}
+.pin.room{background:var(--room)}.pin.owner{background:var(--owner)}.pin.seek{background:var(--seek)}.pin.pair{background:var(--pair)}.pin.item{background:var(--item)}
+.pin.mine{outline:3px solid #FFD23F;outline-offset:1px}
+.pin.mine::after{content:"ของคุณ";font-size:10px;background:#FFD23F;color:#1F1C3B;border-radius:6px;padding:1px 5px;margin-left:2px}
+.zoomed-out .pin{font-size:0;padding:6px;gap:0}.zoomed-out .pin::after{display:none}
+.maplibregl-popup-content{font-family:var(--body);border-radius:14px;padding:10px 12px}
+@media (prefers-reduced-motion:reduce){.frame{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><p>ROOMER · ตัวอย่างสำหรับเลือกแบบ ยังไม่ได้ใช้ในเว็บจริง</p><h1>แผนที่แบบละเอียด 5 แบบ</h1>
+  <p class="lead">ทุกแบบใช้แผนที่จริงจาก OpenStreetMap เห็นถนนทุกเส้น ซอย ชื่อสถานที่ และซูมได้ทั่วประเทศ หมุดราคาเป็นข้อมูลตัวอย่างแถวอารีย์ พระราม 9 อโศก และลาดพร้าว ลองซูม ลาก และกดที่หมุดดูได้เลย</p></header>
+  <div class="tabs" role="group" aria-label="เลือกแบบแผนที่" id="tabs"></div>
+  <div class="bar"><label class="toggle"><input type="checkbox" id="phone"> ดูขนาดหน้าจอโทรศัพท์</label></div>
+  <div class="stage" id="stage"><div class="frame" id="frame"><div id="map"></div>
+    <div class="legend"><span><i style="background:var(--room)"></i>หารูมเมท</span><span><i style="background:var(--owner)"></i>ห้องว่างให้เช่า</span><span><i style="background:var(--seek)"></i>ขอเข้าร่วมห้อง</span><span><i style="background:var(--pair)"></i>รวมทีมหาห้อง</span><span><i style="background:var(--item)"></i>ส่งต่อของใช้</span></div>
+  </div></div>
+  <section class="note" id="note"></section>
+  <p class="foot">แผนที่: © ผู้ร่วมพัฒนา OpenStreetMap · ไทล์จาก OpenFreeMap ใช้ฟรีรวมถึงเชิงพาณิชย์ เส้นรถไฟฟ้าและพื้นที่น้ำขังในแบบที่ 5 วาดประมาณเพื่อดูหน้าตา ไม่ใช่ข้อมูลจริง</p>
+</div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const OFM='https://tiles.openfreemap.org/styles/';
+const THEMES={
+ clean:{name:'สะอาดตา',sub:'โทนเทาอ่อน ถนนขาวชัด',base:'positron',
+   c:{land:'#F3F2F7',land2:'#EEEDF3',water:'#C9DEF3',park:'#DCEED6',building:'#E4E2EB',major:'#FFFFFF',majorCase:'#D3D0DE',minor:'#FFFFFF',minorCase:'#E2E0EA',rail:'#B9B5C9',label:'#4A4766',halo:'#FFFFFF'},
+   pros:['อ่านง่ายที่สุด หมุดราคาเด่นชัด','เห็นถนนและซอยครบ แต่ไม่รก','เหมาะกับคนที่ต้องการดูทำเลเร็ว ๆ'],cons:['หน้าตาเรียบ ยังไม่ค่อยเป็นแบรนด์ ROOMER']},
+ brand:{name:'ROOMER ม่วงพาสเทล',sub:'สีเข้ากับเว็บ',base:'positron',
+   c:{land:'#F1EDFC',land2:'#ECE6FB',water:'#C6D9FB',park:'#D9F0E2',building:'#E3DBF8',major:'#FFFFFF',majorCase:'#C4B6F2',minor:'#FDFCFF',minorCase:'#DDD4F7',rail:'#A78BFA',label:'#3D3366',halo:'#FBFAFF'},
+   pros:['สีเดียวกับเว็บ ดูเป็นแอปเดียวกัน','ถนนใหญ่มีขอบม่วงอ่อน ไล่สายตาง่าย','หมุดราคายังเด่นบนพื้นสีอ่อน'],cons:['สีพื้นม่วงอาจกลืนกับหมุด "หารูมเมท" เล็กน้อย ต้องมีขอบขาวที่หมุด']},
+ street:{name:'ละเอียดเต็มที่',sub:'สีครบ มีร้านค้า ตึก 3 มิติ',base:'liberty',c:null,
+   pros:['ละเอียดที่สุด เห็นร้านสะดวกซื้อ โรงพยาบาล ตลาด ร้านอาหาร','ซูมใกล้แล้วเห็นตึกเป็น 3 มิติ','คนหาห้องดูได้ว่าแถวนั้นมีอะไรบ้าง'],cons:['ข้อมูลเยอะ หมุดราคาเด่นน้อยลง','บนจอโทรศัพท์ดูแน่นกว่าแบบอื่น']},
+ night:{name:'โหมดกลางคืน',sub:'สำหรับธีมมืด',base:'positron',
+   c:{land:'#17142B',land2:'#1B1833',water:'#0E2340',park:'#18291F',building:'#241F3D',major:'#3B3466',majorCase:'#2A2448',minor:'#2C2650',minorCase:'#221D3D',rail:'#5B4E9A',label:'#C9C3EA',halo:'#17142B'},
+   pros:['ใช้คู่กับโหมดมืดของเว็บ','ถนนยังเห็นชัด หมุดสีสว่างเด่นมาก','สบายตาตอนกลางคืน'],cons:['ไม่เหมาะเป็นค่าเริ่มต้น ใช้เมื่อผู้ใช้เปิดโหมดมืด']},
+ transit:{name:'เน้นรถไฟฟ้า + น้ำขัง',sub:'เส้นรถไฟฟ้าสีจริง พื้นที่เสี่ยงน้ำขัง',base:'positron',
+   c:{land:'#F5F5F7',land2:'#F0F0F3',water:'#D3E3F1',park:'#E2EEDC',building:'#E8E8EE',major:'#FFFFFF',majorCase:'#D8D8E2',minor:'#FFFFFF',minorCase:'#E6E6EC',rail:'#CFCFDA',label:'#55536B',halo:'#FFFFFF'},
+   pros:['เห็นทันทีว่าห้องไหนใกล้สถานีไหน สีตามสายจริง','บอกพื้นที่เสี่ยงน้ำขัง ซึ่งเป็นจุดเด่นของ ROOMER','ยังเห็นถนนครบเหมือนแบบสะอาดตา'],cons:['ต้องมีข้อมูลเส้นทางและน้ำขังจริงมาใส่เพิ่มก่อนใช้งาน']}
+};
+const ORDER=['clean','brand','street','night','transit'];
+const PINS=[
+ [100.5440,13.7799,'room','฿6,000'],[100.5480,13.7930,'room','฿3,500'],[100.5385,13.7650,'room','฿4,800'],[100.5320,13.7590,'owner','฿9,000'],
+ [100.5660,13.7570,'room','฿7,800',1],[100.5760,13.7790,'room','฿3,800'],[100.5740,13.8070,'room','฿5,800'],[100.5770,13.7990,'pair','≤฿8,500'],
+ [100.5620,13.7380,'room','฿8,500'],[100.5700,13.7310,'seek','฿6,500'],[100.5700,13.7900,'item','ฟรี'],[100.5500,13.8000,'seek','฿4,500'],
+ [100.5800,13.7250,'owner','฿16,000'],[100.5600,13.7520,'item','฿500'],[100.5300,13.7525,'seek','฿3,800'],[100.5345,13.7462,'owner','฿15,000']];
+const KN={room:'หารูมเมท',owner:'ห้องว่างให้เช่า',seek:'ขอเข้าร่วมห้อง',pair:'รวมทีมหาห้อง',item:'ส่งต่อของใช้'};
+/* approximate rail lines for the transit mock-up */
+const LINES=[
+ {n:'BTS สุขุมวิท',c:'#7AC143',p:[[100.5538,13.8026],[100.5499,13.7936],[100.5446,13.7795],[100.5420,13.7726],[100.5372,13.7628],[100.5339,13.7568],[100.5316,13.7519],[100.5341,13.7456],[100.5430,13.7441],[100.5490,13.7430],[100.5554,13.7405],[100.5603,13.7371],[100.5697,13.7305],[100.5785,13.7242],[100.5852,13.7196],[100.6011,13.7056]]},
+ {n:'BTS สีลม',c:'#00837E',p:[[100.5290,13.7465],[100.5341,13.7456],[100.5395,13.7395],[100.5343,13.7286],[100.5294,13.7238]]},
+ {n:'MRT สายสีน้ำเงิน',c:'#1E4FA0',p:[[100.5606,13.8137],[100.5535,13.8030],[100.5732,13.8061],[100.5747,13.7986],[100.5741,13.7896],[100.5737,13.7786],[100.5701,13.7660],[100.5654,13.7578],[100.5634,13.7486],[100.5610,13.7378],[100.5600,13.7232],[100.5537,13.7223],[100.5455,13.7255],[100.5366,13.7292],[100.5297,13.7325],[100.5170,13.7377]]},
+ {n:'แอร์พอร์ตเรลลิงก์',c:'#D7263D',p:[[100.5348,13.7565],[100.5420,13.7550],[100.5610,13.7510],[100.6003,13.7429],[100.6453,13.7378]]}
+];
+const circle=(lng,lat,r)=>{const pts=[];for(let i=0;i<=36;i++){const a=i/36*Math.PI*2;pts.push([lng+Math.cos(a)*r*1.03,lat+Math.sin(a)*r])}return pts};
+const FLOOD={type:'FeatureCollection',features:[[100.5790,13.7830,.006,'สูง'],[100.5680,13.7960,.005,'กลาง'],[100.5520,13.7700,.004,'กลาง'],[100.5900,13.7330,.007,'สูง']].map(([x,y,r,l])=>({type:'Feature',properties:{l},geometry:{type:'Polygon',coordinates:[circle(x,y,r)]}}))};
+
+let map,cur=new URLSearchParams(location.search).get('style')||'clean',markers=[];
+if(!THEMES[cur])cur='clean';
+const tabs=document.getElementById('tabs');
+tabs.innerHTML=ORDER.map((k,i)=>`<button class="tab" type="button" data-k="${k}" aria-pressed="${k===cur}"><b>${i+1}. ${THEMES[k].name}</b><small>${THEMES[k].sub}</small></button>`).join('');
+tabs.onclick=e=>{const b=e.target.closest('.tab');if(b)setTheme(b.dataset.k)};
+document.getElementById('phone').onchange=e=>{document.getElementById('stage').classList.toggle('phone',e.target.checked);setTimeout(()=>map&&map.resize(),300)};
+
+function recolor(c){
+  const st=map.getStyle();
+  for(const l of st.layers){
+    const id=l.id,sl=l['source-layer']||'',t=l.type,set=(p,v)=>{try{map.setPaintProperty(id,p,v)}catch(e){}};
+    if(t==='background')set('background-color',c.land);
+    else if(t==='fill'){
+      if(sl==='water')set('fill-color',c.water);
+      else if(sl==='park'||/park|grass|wood|forest|landcover/.test(id))set('fill-color',c.park);
+      else if(sl==='building'){set('fill-color',c.building);set('fill-outline-color',c.building)}
+      else if(sl==='landuse'||sl==='landcover')set('fill-color',c.land2);
+      else if(sl==='aeroway')set('fill-color',c.land2);
+    } else if(t==='fill-extrusion')set('fill-extrusion-color',c.building);
+    else if(t==='line'){
+      if(sl==='waterway')set('line-color',c.water);
+      else if(sl==='transportation'||sl==='transportation_name'){
+        const major=/motorway|trunk|primary|major/.test(id),cas=/casing|outline/.test(id);
+        if(/rail|transit|subway/.test(id))set('line-color',c.rail);
+        else set('line-color',cas?(major?c.majorCase:c.minorCase):(major?c.major:c.minor));
+      } else if(sl==='boundary')set('line-color',c.rail);
+      else if(sl==='building')set('line-color',c.building);
+    } else if(t==='symbol'){set('text-color',c.label);set('text-halo-color',c.halo);set('icon-opacity',.7)}
+  }
+}
+function thaiLabels(){for(const l of map.getStyle().layers){if(l.type!=='symbol')continue;const tf=map.getLayoutProperty(l.id,'text-field');if(!tf)continue;try{map.setLayoutProperty(l.id,'text-field',['coalesce',['get','name:th'],['get','name'],['get','name:latin']])}catch(e){}}}
+function addTransit(){
+  map.addSource('flood',{type:'geojson',data:FLOOD});
+  map.addLayer({id:'flood',type:'fill',source:'flood',paint:{'fill-color':['match',['get','l'],'สูง','#3B82F6','#60A5FA'],'fill-opacity':['match',['get','l'],'สูง',.28,.18]}});
+  map.addLayer({id:'flood-line',type:'line',source:'flood',paint:{'line-color':'#3B82F6','line-width':1.2,'line-dasharray':[2,2]}});
+  map.addSource('rail',{type:'geojson',data:{type:'FeatureCollection',features:LINES.map(L=>({type:'Feature',properties:{c:L.c,n:L.n},geometry:{type:'LineString',coordinates:L.p}}))}});
+  map.addLayer({id:'rail-case',type:'line',source:'rail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':['interpolate',['linear'],['zoom'],11,4,16,10]}});
+  map.addLayer({id:'rail',type:'line',source:'rail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','c'],'line-width':['interpolate',['linear'],['zoom'],11,2.5,16,6]}});
+  map.addSource('st',{type:'geojson',data:{type:'FeatureCollection',features:LINES.flatMap(L=>L.p.map(p=>({type:'Feature',properties:{c:L.c},geometry:{type:'Point',coordinates:p}})))}});
+  map.addLayer({id:'st',type:'circle',source:'st',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,2.5,16,6],'circle-color':'#fff','circle-stroke-color':['get','c'],'circle-stroke-width':2}});
+}
+function addPins(){markers.forEach(m=>m.remove());markers=PINS.map(([x,y,k,p,mine])=>{const el=document.createElement('div');el.className='pin '+k+(mine?' mine':'');el.textContent=p;
+  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([x,y]).setPopup(new maplibregl.Popup({offset:18,closeButton:false}).setHTML(`<b>${KN[k]}</b><br>${p}${k==='item'?'':' ต่อคน'} · ตัวอย่าง`)).addTo(map)})}
+function noteFor(k){const t=THEMES[k];document.getElementById('note').innerHTML=`<h2>${ORDER.indexOf(k)+1}. ${t.name}</h2><div><h3>จุดเด่น</h3><ul>${t.pros.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h3>ข้อควรคิด</h3><ul>${t.cons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+function setTheme(k){cur=k;tabs.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));noteFor(k);
+  document.getElementById('frame').classList.toggle('dark',k==='night');
+  try{history.replaceState(null,'','?style='+k)}catch(e){}
+  const t=THEMES[k],view=map?{center:map.getCenter(),zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()}:{center:[100.5560,13.7660],zoom:13.1,pitch:0,bearing:0};
+  if(!map){map=new maplibregl.Map({container:'map',style:OFM+t.base,...view,attributionControl:{compact:true},maxZoom:18.5});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.on('zoom',()=>document.getElementById('frame').classList.toggle('zoomed-out',map.getZoom()<11.5))}
+  else map.setStyle(OFM+t.base,{diff:false});
+  map.once('style.load',()=>{thaiLabels();if(t.c)recolor(t.c);if(k==='transit')addTransit();
+    if(k==='street'){map.easeTo({pitch:45,duration:600})}else if(map.getPitch())map.easeTo({pitch:0,duration:400})});
+  addPins();
+}
+setTheme(cur);
+</script>
+</body>
+</html>
