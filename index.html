@@ -19,7 +19,7 @@
   --brand:#5B4BDB; --brand-deep:#4031B5; --brand-soft:#ECE9FE; --grad-brand:linear-gradient(135deg,#5B4BDB 0%,#8455F0 58%,#BC5BD6 100%);
   --coral:#F0704F; --coral-deep:#C94F2E; --coral-soft:#FFEDE6; --grad-coral:linear-gradient(135deg,#F0704F 0%,#FF9E4C 100%);
   --sky:#2479C9; --sky-deep:#155C9E; --sky-soft:#E1F0FC; --grad-sky:linear-gradient(135deg,#2E7FD9 0%,#22B5C9 100%);
-  --gold:#B07A06; --gold-deep:#8A5E00; --gold-soft:#FFF4D6; --grad-gold:linear-gradient(135deg,#FF9F1C 0%,#FFC531 50%,#FFE45E 100%);
+  --gold:#B07A06; --gold-deep:#8A5E00; --gold-soft:#FFF4D6; --grad-gold:linear-gradient(135deg,#FFC81F 0%,#FFD93D 50%,#FFEC70 100%);
   --leaf:#178A50; --leaf-deep:#0F6B3D; --leaf-soft:#E0F5E9; --grad-leaf:linear-gradient(135deg,#0B9A63 0%,#25C17E 50%,#8EDC6A 100%);
   --teal:#11A39A; --teal-deep:#0B7F78; --teal-soft:#DDF5F1; --grad-teal:linear-gradient(135deg,#11A39A 0%,#43C79C 100%);
   --good:#12936F; --good-soft:#DFF4EC; --warn:#A86E12; --warn-soft:#FFF3DA; --bad:#CF3F3F; --bad-soft:#FCE8E8;
@@ -318,13 +318,32 @@ input[type=range]{width:100%;accent-color:var(--brand)}
 /* ---------- map ---------- */
 .map{position:relative;width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--land);box-shadow:var(--shadow);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .map.drag{cursor:grabbing}
+/* live base map (MapLibre + OpenStreetMap); the SVG stays on top only for province dots */
+.map .gl{position:absolute;inset:0;z-index:0}
+.map.glon{background:var(--land)}
+.map.glon>svg{pointer-events:none;z-index:1}
+.map.glon>svg>:not(#pdots){display:none}
+.map.glon #pdots{pointer-events:auto}
+.map.glon .pins,.map.glon .pois{z-index:2}
+.map .maplibregl-ctrl-attrib{font-size:10px;background:var(--glass)}
+.map .maplibregl-ctrl-bottom-right{z-index:6}
+.map .maplibregl-popup-content{font:13px/1.5 var(--f-ui);background:var(--surface);color:var(--fg);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+.map .maplibregl-popup-tip{border-top-color:var(--surface);border-bottom-color:var(--surface)}
+.fpop b{display:block;font-size:13.5px}.fpop small{color:var(--muted);display:block;margin-top:2px}
+.fpop .lv{display:inline-flex;align-items:center;gap:5px;font-weight:600}.fpop .lv i{width:9px;height:9px;border-radius:50%}
+.flood.l0{background:var(--sunk)}
+.flood .src{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
+.flood .src a{color:inherit}
+.flood ul{margin:4px 0 0;padding-left:18px}
+.floodnote .src{display:block;margin-top:3px;color:var(--muted);font-size:11px}.floodnote .src a{color:inherit}
+@media (max-width:640px){.floodnote{top:auto;bottom:auto;top:54px;padding:6px 10px}.floodnote .src{display:none}.floodnote span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
 .map>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .pins,.pois{position:absolute;inset:0;pointer-events:none}
 .pin{position:absolute;left:0;top:0;pointer-events:auto;border:2px solid #fff;font:700 13px/1 var(--f-ui);font-variant-numeric:tabular-nums;padding:6px 10px;border-radius:99px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;color:#fff;box-shadow:0 4px 12px rgba(31,28,59,.22)}
 .pin svg{flex:none;display:block}
 .pin:hover{z-index:6}
 .pin::after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;transform:translateX(-50%) rotate(45deg);background:var(--tip);border-right:2px solid #fff;border-bottom:2px solid #fff}
-.pin.room{background:var(--grad-brand);--tip:#8455F0} .pin.seek{background:var(--grad-coral);--tip:#F7874D} .pin.pair{background:var(--grad-sky);--tip:#289AD1} .pin.owner{background:var(--grad-gold);--tip:#E9B530;color:#3A2A00} .pin.item{background:var(--grad-leaf);--tip:#3DB473}
+.pin.room{background:var(--grad-brand);--tip:#8455F0} .pin.seek{background:var(--grad-coral);--tip:#F7874D} .pin.pair{background:var(--grad-sky);--tip:#289AD1} .pin.owner{background:var(--grad-gold);--tip:#FFCC2E;color:#3A2A00} .pin.item{background:var(--grad-leaf);--tip:#3DB473}
 .pin.mine{box-shadow:0 0 0 3px #fff,0 0 0 6px #11A39A,0 4px 12px rgba(31,28,59,.22);z-index:4}
 .pin.closed{opacity:.55}
 .pin.sel{background:#1F1C3B;--tip:#1F1C3B;color:#fff;z-index:5}
@@ -2075,41 +2094,40 @@ const CITIES={
   hkt:{n:'ภูเก็ต',lat0:8.12,lng0:98.22,K:3800,center:[7.88,98.35],w:820}
 };
 const AREAS={
-  rama9:{c:'bkk',n:'พระราม 9',lat:13.757,lng:100.566,fl:2,ft:'น้ำขังในซอยย่อย 30–60 นาทีหลังฝนหนัก ถนนใหญ่ระบายได้'},
-  asok:{c:'bkk',n:'อโศก-พร้อมพงษ์',lat:13.735,lng:100.566,fl:2,ft:'ช่วงฝนหนักน้ำขังบางจุดบนถนนใหญ่ รถติดหนัก'},
-  thonglo:{c:'bkk',n:'ทองหล่อ-เอกมัย',lat:13.722,lng:100.584,fl:2,ft:'ซอยลึกบางซอยน้ำขัง 30 นาที'},
-  onnut:{c:'bkk',n:'อ่อนนุช-บางจาก',lat:13.701,lng:100.603,fl:3,ft:'บางซอยน้ำขังนานกว่า 1 ชม. ควรถามชั้นที่พักและเส้นทางเลี่ยง'},
-  bangna:{c:'bkk',n:'บางนา-แบริ่ง',lat:13.668,lng:100.605,fl:2,ft:'น้ำขังเป็นจุด ๆ ในซอย ระบายได้ภายใน 1 ชม.'},
-  silom:{c:'bkk',n:'สีลม-สามย่าน',lat:13.729,lng:100.531,fl:1,ft:'ระบายเร็ว แทบไม่มีน้ำขัง'},
-  victory:{c:'bkk',n:'อนุสาวรีย์-พญาไท',lat:13.761,lng:100.537,fl:1,ft:'ระบายได้ดี มีน้ำขังสั้น ๆ บางจุด'},
-  ari:{c:'bkk',n:'อารีย์-สะพานควาย',lat:13.787,lng:100.547,fl:1,ft:'ระบายได้ดี'},
-  ladprao:{c:'bkk',n:'ลาดพร้าว-รัชดา',lat:13.800,lng:100.575,fl:2,ft:'ช่วงฝนหนักน้ำขังบริเวณแยกใหญ่'},
-  kaset:{c:'bkk',n:'เกษตร-เสนานิคม',lat:13.838,lng:100.572,fl:2,ft:'ซอยแคบบางซอยน้ำขัง 30–60 นาที'},
-  ram:{c:'bkk',n:'รามคำแหง-หัวหมาก',lat:13.748,lng:100.618,fl:3,ft:'ซอยลึกน้ำขังนาน บางช่วงรถเล็กผ่านลำบาก'},
-  pracha:{c:'bkk',n:'ประชาอุทิศ-ห้วยขวางใน',lat:13.778,lng:100.600,fl:2,ft:'ซอยย่อยมีน้ำขังหลังฝนหนัก'},
-  bangkapi:{c:'bkk',n:'บางกะปิ-ลำสาลี',lat:13.766,lng:100.652,fl:3,ft:'จุดเสี่ยงน้ำขังหลายจุด ควรเลือกชั้นสูง'},
-  srinakarin:{c:'bkk',n:'พัฒนาการ-ศรีนครินทร์',lat:13.708,lng:100.640,fl:2,ft:'ถนนใหญ่ระบายได้ ซอยย่อยบางซอยขัง'},
-  nonthaburi:{c:'bkk',n:'นนทบุรี-แคราย',lat:13.860,lng:100.515,fl:2,ft:'ใกล้แม่น้ำ บางซอยน้ำขังช่วงน้ำหนุนและฝนหนัก'},
-  rangsit:{c:'bkk',n:'ดอนเมือง-รังสิต',lat:13.935,lng:100.612,fl:3,ft:'พื้นที่ต่ำหลายจุด น้ำขังนานในช่วงฝนตกต่อเนื่อง'},
-  paknam:{c:'bkk',n:'สมุทรปราการ-ปากน้ำ',lat:13.598,lng:100.602,fl:3,ft:'ใกล้ทะเล น้ำขังได้ทั้งจากฝนและน้ำทะเลหนุน'},
-  nimman:{c:'cnx',n:'นิมมาน-มช.',lat:18.799,lng:98.966,fl:1,ft:'ระบายได้ดี ช่วงฝนหนักน้ำขังสั้น ๆ ที่แยกใหญ่'},
-  oldcity:{c:'cnx',n:'เมืองเก่า-ท่าแพ',lat:18.788,lng:98.990,fl:2,ft:'บางซอยในเมืองเก่าน้ำขังช่วงฝนหนัก'},
-  santitham:{c:'cnx',n:'สันติธรรม-ช้างเผือก',lat:18.806,lng:98.983,fl:1,ft:'ระบายได้ดี'},
-  ping:{c:'cnx',n:'ริมปิง-หนองหอย',lat:18.772,lng:99.008,fl:3,ft:'ใกล้แม่น้ำปิง ช่วงน้ำหลากควรเช็กประวัติน้ำท่วม'},
-  kku:{c:'kkc',n:'มข.-กังสดาล',lat:16.472,lng:102.818,fl:1,ft:'ระบายได้ดี'},
-  kkcity:{c:'kkc',n:'ใจกลางเมือง-เซ็นทรัล',lat:16.433,lng:102.826,fl:2,ft:'น้ำขังบางถนนช่วงฝนหนัก'},
-  bueng:{c:'kkc',n:'บึงแก่นนคร',lat:16.413,lng:102.838,fl:2,ft:'รอบบึงบางจุดน้ำขังสั้น ๆ'},
-  bangsaen:{c:'chon',n:'บางแสน-ม.บูรพา',lat:13.283,lng:100.925,fl:1,ft:'ระบายได้ดี'},
-  sriracha:{c:'chon',n:'ศรีราชา',lat:13.170,lng:100.932,fl:2,ft:'บางถนนน้ำขังช่วงฝนหนัก'},
-  pattaya:{c:'chon',n:'พัทยา-จอมเทียน',lat:12.925,lng:100.885,fl:2,ft:'ถนนเลียบชายหาดน้ำขังเป็นช่วง ๆ'},
-  hktown:{c:'hkt',n:'ตัวเมืองภูเก็ต',lat:7.885,lng:98.390,fl:2,ft:'ย่านเมืองเก่าน้ำขังช่วงฝนหนัก'},
-  kathu:{c:'hkt',n:'กะทู้-ป่าตอง',lat:7.905,lng:98.315,fl:2,ft:'ทางลงเขาบางจุดน้ำไหลแรงช่วงพายุ'},
-  chalong:{c:'hkt',n:'ฉลอง-ราไวย์',lat:7.830,lng:98.340,fl:1,ft:'ระบายได้ดี'}
+  rama9:{c:'bkk',n:'พระราม 9',lat:13.757,lng:100.566},
+  asok:{c:'bkk',n:'อโศก-พร้อมพงษ์',lat:13.735,lng:100.566},
+  thonglo:{c:'bkk',n:'ทองหล่อ-เอกมัย',lat:13.722,lng:100.584},
+  onnut:{c:'bkk',n:'อ่อนนุช-บางจาก',lat:13.701,lng:100.603},
+  bangna:{c:'bkk',n:'บางนา-แบริ่ง',lat:13.668,lng:100.605},
+  silom:{c:'bkk',n:'สีลม-สามย่าน',lat:13.729,lng:100.531},
+  victory:{c:'bkk',n:'อนุสาวรีย์-พญาไท',lat:13.761,lng:100.537},
+  ari:{c:'bkk',n:'อารีย์-สะพานควาย',lat:13.787,lng:100.547},
+  ladprao:{c:'bkk',n:'ลาดพร้าว-รัชดา',lat:13.800,lng:100.575},
+  kaset:{c:'bkk',n:'เกษตร-เสนานิคม',lat:13.838,lng:100.572},
+  ram:{c:'bkk',n:'รามคำแหง-หัวหมาก',lat:13.748,lng:100.618},
+  pracha:{c:'bkk',n:'ประชาอุทิศ-ห้วยขวางใน',lat:13.778,lng:100.600},
+  bangkapi:{c:'bkk',n:'บางกะปิ-ลำสาลี',lat:13.766,lng:100.652},
+  srinakarin:{c:'bkk',n:'พัฒนาการ-ศรีนครินทร์',lat:13.708,lng:100.640},
+  nonthaburi:{c:'bkk',n:'นนทบุรี-แคราย',lat:13.860,lng:100.515},
+  rangsit:{c:'bkk',n:'ดอนเมือง-รังสิต',lat:13.935,lng:100.612},
+  paknam:{c:'bkk',n:'สมุทรปราการ-ปากน้ำ',lat:13.598,lng:100.602},
+  nimman:{c:'cnx',n:'นิมมาน-มช.',lat:18.799,lng:98.966},
+  oldcity:{c:'cnx',n:'เมืองเก่า-ท่าแพ',lat:18.788,lng:98.990},
+  santitham:{c:'cnx',n:'สันติธรรม-ช้างเผือก',lat:18.806,lng:98.983},
+  ping:{c:'cnx',n:'ริมปิง-หนองหอย',lat:18.772,lng:99.008},
+  kku:{c:'kkc',n:'มข.-กังสดาล',lat:16.472,lng:102.818},
+  kkcity:{c:'kkc',n:'ใจกลางเมือง-เซ็นทรัล',lat:16.433,lng:102.826},
+  bueng:{c:'kkc',n:'บึงแก่นนคร',lat:16.413,lng:102.838},
+  bangsaen:{c:'chon',n:'บางแสน-ม.บูรพา',lat:13.283,lng:100.925},
+  sriracha:{c:'chon',n:'ศรีราชา',lat:13.170,lng:100.932},
+  pattaya:{c:'chon',n:'พัทยา-จอมเทียน',lat:12.925,lng:100.885},
+  hktown:{c:'hkt',n:'ตัวเมืองภูเก็ต',lat:7.885,lng:98.390},
+  kathu:{c:'hkt',n:'กะทู้-ป่าตอง',lat:7.905,lng:98.315},
+  chalong:{c:'hkt',n:'ฉลอง-ราไวย์',lat:7.830,lng:98.340}
 };
 /* districts (เขต) + more neighbourhoods per city. lat/lng approximate for the schematic map */
 (function(){
-  const FT={1:'ระบายได้ดี มีน้ำขังสั้น ๆ บางจุด',2:'ซอยย่อยบางซอยน้ำขังหลังฝนหนัก',3:'พื้นที่ต่ำ น้ำขังนานช่วงฝนตกต่อเนื่อง ควรเลือกชั้นสูง'};
-  const add=(c,z,list,dist)=>list.forEach(([k,n,lat,lng,fl])=>{AREAS[k]={c,z,n,lat,lng,fl:fl||2,ft:FT[fl||2],dist:!!dist}});
+  const add=(c,z,list,dist)=>list.forEach(([k,n,lat,lng,fl])=>{AREAS[k]={c,z,n,lat,lng,dist:!!dist}});
   add('bkk','inner',[['d_phranakhon','พระนคร',13.764,100.499,1],['d_pomprap','ป้อมปราบศัตรูพ่าย',13.758,100.513,1],['d_samphan','สัมพันธวงศ์',13.733,100.513,1],['d_pathumwan','ปทุมวัน',13.744,100.532,1],['d_bangrak','บางรัก',13.728,100.524,1],['d_sathorn','สาทร',13.708,100.528,2],['d_bangkholaem','บางคอแหลม',13.693,100.502,2],['d_yannawa','ยานนาวา',13.696,100.543,2],['d_dusit','ดุสิต',13.777,100.520,1],['d_ratchathewi','ราชเทวี',13.759,100.535,1],['d_phayathai','พญาไท',13.780,100.543,1]],1);
   add('bkk','north',[['d_chatuchak','จตุจักร',13.828,100.560,2],['d_bangsue','บางซื่อ',13.809,100.537,2],['d_dindaeng','ดินแดง',13.770,100.553,2],['d_huaikhwang','ห้วยขวาง',13.776,100.579,2],['d_laksi','หลักสี่',13.887,100.579,2],['d_donmueang','ดอนเมือง',13.910,100.594,3],['d_bangkhen','บางเขน',13.873,100.596,3],['d_saimai','สายไหม',13.896,100.660,3],['d_ladprao','ลาดพร้าว',13.817,100.607,2],['d_wangthong','วังทองหลาง',13.780,100.610,2]],1);
   add('bkk','suk',[['d_khlongtoei','คลองเตย',13.722,100.560,2],['d_watthana','วัฒนา',13.742,100.586,2],['d_phrakhanong','พระโขนง',13.702,100.601,3],['d_bangna','บางนา',13.680,100.606,2],['d_suanluang','สวนหลวง',13.730,100.651,2],['d_prawet','ประเวศ',13.717,100.694,3]],1);
@@ -2497,7 +2515,7 @@ function defaults(){
     requested:[],offered:[],joined:[],joinState:{},inqState:{},introduced:[],myBoard:[],reports:0,
     liked:[],saved:[],compare:[],cmpApps:[],views:{},comments:{},chats:[],notifs:[],
     ui:{mode:'all',city:'bkk',area:'all',q:'',max:20000,needs:[],walk:-1,moveBy:'',types:[],minSize:0,showClosed:false,urgentOnly:false,sort:'match',filters:false,postType:'room',
-      layers:{rail:true,shop:true,transit:true,place:false,flood:false},bcat:'all',role:'room',layout:'split',demoMine:false,cmpTab:'place',chat:null,drawer:false,step:{}}
+      layers:{rail:true,shop:true,transit:true,place:false,flood:true},bcat:'all',role:'room',layout:'split',demoMine:false,cmpTab:'place',chat:null,drawer:false,step:{}}
   };
 }
 let S;
@@ -2989,15 +3007,14 @@ function mapSVG(){
   const base=g.land?`<rect x="-3000" y="-3000" width="9000" height="9000" fill="var(--water)"/><path d="${poly(g.land)}Z" fill="var(--land)"/><path d="${poly(g.land)}Z" fill="url(#streets)"/>`
     :`<rect x="-3000" y="-3000" width="9000" height="9000" fill="var(--land)"/><rect x="-3000" y="-3000" width="9000" height="9000" fill="url(#streets)"/>`;
   const areas=Object.values(AREAS).filter(a=>a.c===S.ui.city&&!a.dist);
-  const fl=areas.map(a=>{const [x,y]=P(a.lat,a.lng),col=a.fl===3?'#E5484D':a.fl===2?'#F0A030':'#11A39A';return `<circle cx="${x}" cy="${y}" r="${(.0055+a.fl*.0016)*K}" fill="${col}" fill-opacity=".13" stroke="${col}" stroke-opacity=".5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>`}).join('');
-  const flt=areas.map(a=>{const [x,y]=P(a.lat,a.lng);return `<text class="fltx" data-y="${y}" x="${x}" y="${y}" text-anchor="middle">น้ำขัง: ${FLOODLV[a.fl]}</text>`}).join('');
+  const fl=floodSVG();
   return `<svg id="msvg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="แผนที่${c.n} แบบจำลอง แสดงประกาศและสถานที่ใกล้เคียง">
   <defs><pattern id="streets" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(14)"><path d="M0 0H16M0 0V16" stroke="var(--street)" stroke-width="1.6" fill="none"/></pattern></defs>
   ${base}
   ${g.parks.map(([a,b,h,w])=>{const [x,y]=P(a+h/2,b-w/2),[x2,y2]=P(a-h/2,b+w/2);return `<rect x="${x}" y="${y}" width="${x2-x}" height="${y2-y}" rx="${(x2-x)/6}" fill="var(--park)"/>`}).join('')}
   ${water}
   <g fill="none" stroke="var(--road)" stroke-linecap="round" stroke-linejoin="round">${g.roads.map(r=>`<path d="${poly(r)}" stroke-width="6" vector-effect="non-scaling-stroke"/>`).join('')}</g>
-  <g id="flood" style="display:none">${fl}<g id="flt" fill="var(--fg)" font-family="system-ui,sans-serif" font-weight="600" opacity=".7">${flt}</g></g>
+  <g id="flood" style="display:none">${fl}</g>
   ${g.provDots?`<g id="pdots">${g.provDots.map(([k,n,a,b],i)=>{const [x,y]=P(a,b);return `<circle class="pdot${i<5?' big':''}" data-city="${k}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" vector-effect="non-scaling-stroke"><title>${n}</title></circle>`}).join('')}</g>`:''}
   <g id="dlab" fill="var(--maplabel)" font-family="system-ui,sans-serif" font-weight="600" text-anchor="middle" letter-spacing=".06em">${g.districts.map(([n,a,b],i)=>{const [x,y]=P(a,b);return `<text class="dl${i<5?' big':''}" data-y="${y}" x="${x}" y="${y}">${n}</text>`}).join('')}</g>
   <g id="rail"><g fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7">${g.rails.map(L=>`<path d="${poly(L.s.map(s=>[s[1],s[2]]))}" stroke="${RAILS[L.k][1]}" stroke-width="3.5" vector-effect="non-scaling-stroke"/>`).join('')}</g>
@@ -3019,16 +3036,17 @@ function drawMap(){
   svg.querySelectorAll('.slab').forEach(t=>{t.setAttribute('x',(+t.dataset.x+6*k).toFixed(1));t.setAttribute('y',(+t.dataset.y+4*k).toFixed(1));t.style.display=(showAll||(showMajor&&t.classList.contains('major')))?'':'none'});
   const sl=$('#slabs');sl.setAttribute('font-size',(11*k).toFixed(2));sl.setAttribute('stroke-width',(3*k).toFixed(2));
   $('#dlab').setAttribute('font-size',(11.5*k).toFixed(2));
-  if(g0.provDots){const all=v.w<420;svg.querySelectorAll('#dlab .dl').forEach(t=>{t.style.display=(all||t.classList.contains('big'))?'':'none';t.setAttribute('y',(+t.dataset.y-7*k).toFixed(1))});svg.querySelectorAll('.pdot').forEach(d=>d.setAttribute('r',((d.classList.contains('big')?5:3.2)*k).toFixed(2)))}$('#flt').setAttribute('font-size',(11*k).toFixed(2));
-  svg.querySelectorAll('.fltx').forEach(t=>t.setAttribute('y',(+t.dataset.y+4*k).toFixed(1)));
+  if(g0.provDots){const all=v.w<420;svg.querySelectorAll('#dlab .dl').forEach(t=>{t.style.display=(all||t.classList.contains('big'))?'':'none';t.setAttribute('y',(+t.dataset.y-7*k).toFixed(1))});svg.querySelectorAll('.pdot').forEach(d=>d.setAttribute('r',((d.classList.contains('big')?5:3.2)*k).toFixed(2)))}svg.querySelectorAll('.fls').forEach(e=>e.setAttribute('r',(+e.dataset.r*k).toFixed(2)));
   $$('.pin').forEach(p=>{p.hidden=!place(p,+p.dataset.x,+p.dataset.y,'calc(-100% - 6px)')});
   const anyPoi=L.shop||L.transit||L.place,poiW=c.w*.5,showPoi=anyPoi&&v.w<poiW;$('#pois').hidden=!showPoi;$('#zoomhint').hidden=!(anyPoi&&!showPoi);
-  const fn=$('#floodNote');if(fn)fn.hidden=!L.flood;
+  const fn=$('#floodNote');if(fn){fn.hidden=!L.flood;if(fn.dataset.v!==floodNoteKey()){fn.dataset.v=floodNoteKey();fn.innerHTML=floodNoteHTML()}}
+  if(M.gl&&M.glReady)glLayers();
   if(showPoi)$$('.poi').forEach(p=>{p.hidden=!L[p.dataset.g]||!place(p,+p.dataset.x,+p.dataset.y,'-50%')});
 }
 function clampW(w){return Math.max(70,Math.min(2400,w))}
-function zoomAt(f,cx,cy){const v=M.vb,nx=v.x+(cx/M.W)*v.w,ny=v.y+(cy/M.H)*v.h,w=clampW(v.w*f),h=w*M.H/M.W;M.vb={x:nx-(cx/M.W)*w,y:ny-(cy/M.H)*h,w,h};drawMap()}
+function zoomAt(f,cx,cy){if(M.gl&&M.glReady){M.gl.easeTo({zoom:M.gl.getZoom()-Math.log2(f),around:M.gl.unproject([cx,cy]),duration:250});return}const v=M.vb,nx=v.x+(cx/M.W)*v.w,ny=v.y+(cy/M.H)*v.h,w=clampW(v.w*f),h=w*M.H/M.W;M.vb={x:nx-(cx/M.W)*w,y:ny-(cy/M.H)*h,w,h};drawMap()}
 function animateTo(t){
+  if(M.gl&&M.glReady){M.gl.fitBounds(vbBounds(t),{duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:450});return}
   const from={...M.vb};if(matchMedia('(prefers-reduced-motion: reduce)').matches){M.vb=t;drawMap();return}
   const t0=performance.now();cancelAnimationFrame(animateTo.r);
   const step=n=>{const p=Math.min(1,(n-t0)/400),e=1-Math.pow(1-p,3);M.vb={x:from.x+(t.x-from.x)*e,y:from.y+(t.y-from.y)*e,w:from.w+(t.w-from.w)*e,h:from.h+(t.h-from.h)*e};drawMap();if(p<1)animateTo.r=requestAnimationFrame(step)};
@@ -3037,9 +3055,10 @@ function animateTo(t){
 function viewForArea(){const c=curCity();return S.ui.area==='all'?centerOn(c.center[0],c.center[1],c.w):centerOn(AREAS[S.ui.area].lat,AREAS[S.ui.area].lng,c.w*.4)}
 let mapListeners=false;
 function bindMap(){
-  M.el=$('#map');fitAspect();M.vb=viewForArea();drawMap();
+  if(M.gl){try{M.gl.remove()}catch(e){}M.gl=null;M.glReady=false}
+  M.el=$('#map');fitAspect();M.vb=viewForArea();drawMap();startGL();loadLive();
   const ptrs=new Map();let start=null,moved=0;
-  M.el.addEventListener('pointerdown',e=>{if(e.target.closest('.mapctl,.legend,.layers'))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;start={vb:{...M.vb},pts:new Map(ptrs)};M.el.classList.add('drag')});
+  M.el.addEventListener('pointerdown',e=>{if(M.glReady||e.target.closest('.mapctl,.legend,.layers,.floodnote'))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;start={vb:{...M.vb},pts:new Map(ptrs)};M.el.classList.add('drag')});
   M.move=e=>{
     if(!ptrs.has(e.pointerId)||!start||!M.el)return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});const r=M.el.getBoundingClientRect();
     if(ptrs.size===1){const p0=start.pts.get(e.pointerId);if(!p0)return;const dx=e.clientX-p0.x,dy=e.clientY-p0.y;moved=Math.max(moved,Math.abs(dx)+Math.abs(dy));M.vb={...start.vb,x:start.vb.x-dx*start.vb.w/M.W,y:start.vb.y-dy*start.vb.h/M.H};drawMap()}
@@ -3048,13 +3067,195 @@ function bindMap(){
   };
   M.end=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);start=ptrs.size?{vb:{...M.vb},pts:new Map(ptrs)}:null;if(!ptrs.size&&M.el)M.el.classList.remove('drag');M.dragged=moved>5;setTimeout(()=>M.dragged=false,0)};
   if(!mapListeners){window.addEventListener('pointermove',e=>M.move&&M.move(e));window.addEventListener('pointerup',e=>M.end&&M.end(e));window.addEventListener('pointercancel',e=>M.end&&M.end(e));mapListeners=true}
-  M.el.addEventListener('wheel',e=>{e.preventDefault();const r=M.el.getBoundingClientRect();zoomAt(Math.pow(1.0018,e.deltaY),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+  M.el.addEventListener('wheel',e=>{if(M.glReady)return;e.preventDefault();const r=M.el.getBoundingClientRect();zoomAt(Math.pow(1.0018,e.deltaY),e.clientX-r.left,e.clientY-r.top)},{passive:false});
   M.el.addEventListener('click',e=>{const d=e.target.closest('.pdot');if(d&&!M.dragged&&window.setCity)setCity(d.dataset.city)});
   $('#zin').onclick=()=>zoomAt(.7,M.W/2,M.H/2);$('#zout').onclick=()=>zoomAt(1/.7,M.W/2,M.H/2);$('#zfit').onclick=()=>animateTo(viewForArea());
   $$('[data-layer]').forEach(b=>b.onclick=()=>{const k=b.dataset.layer;S.ui.layers[k]=!S.ui.layers[k];save();b.setAttribute('aria-pressed',S.ui.layers[k]);drawMap()});
 }
+/* ================= live map: real base map, rail lines and flood sensors =================
+   Base map: OpenStreetMap vector tiles from OpenFreeMap (free, commercial use allowed), drawn with MapLibre GL.
+   Rail lines, stations and flood sensors: public.map_layers in Supabase, refreshed by the
+   refresh-map-data edge function (flood every 15 min, rail weekly). If WebGL or the tiles are not
+   available (old phone, strict sandbox) the schematic SVG map above is used instead. */
+const LIVE={flood:null,transit:null,p:null,t:0};
+function loadLive(force){
+  if(LIVE.p&&!force&&Date.now()-LIVE.t<5*60e3)return LIVE.p;
+  LIVE.t=Date.now();
+  LIVE.p=sbFetch('/rest/v1/map_layers?select=id,data,source,fetched_at,source_updated_at').then(rows=>{
+    (rows||[]).forEach(r=>{LIVE[r.id]={...r.data,_src:r.source,_fetched:r.fetched_at}});onLive()}).catch(()=>{onLive()});
+  return LIVE.p;
+}
+setInterval(()=>{if(!document.hidden&&M.el&&document.body.contains(M.el))loadLive(true)},10*60e3);
+function onLive(){
+  LIVE.ready=true;
+  if(M.el&&document.body.contains(M.el))drawMap();
+  const fb=$('#areaFlood');if(fb)fb.outerHTML=areaFloodHTML();
+  const df=$('#dFlood');if(df)df.outerHTML=floodBoxAt(df.dataset.lat,df.dataset.lng,'dFlood');
+  $$('[data-cmpflood]').forEach(e=>{const d=findPost(e.dataset.cmpflood);if(d)e.textContent=floodShort(d)});
+}
+/* ---- flood helpers (real sensors only) ---- */
+const FLC={flood:'#E5484D',slight:'#F59E0B',dry:'#14A38B',off:'#9A97AE'};
+const kmBetween=(a,b,c,d)=>{const R=6371,x=(d-b)*Math.PI/180*Math.cos((a+c)/2*Math.PI/180),y=(c-a)*Math.PI/180;return Math.hypot(x,y)*R};
+const sensorsNear=(lat,lng,km)=>(LIVE.flood&&LIVE.flood.sensors||[]).map(s=>({s,d:kmBetween(+lat,+lng,s.lat,s.lng)})).filter(x=>x.d<=km).sort((a,b)=>a.d-b.d);
+function whenTH(iso,withDate){if(!iso)return '-';const d=new Date(iso);if(isNaN(d))return '-';
+  const o={timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'};if(withDate){o.day='numeric';o.month='short'}
+  return d.toLocaleString(I18N.on?'en-GB':'th-TH',o)}
+function histDays(){const f=LIVE.flood;if(!f)return 0;const from=f.coverFrom||f.historyFrom;if(!from)return 1;return Math.max(1,Math.min(90,Math.round((Date.now()-Date.parse(from))/864e5)))}
+const depthTxt=s=>s.level==='off'||s.depth==null?T('เซนเซอร์ปิดอยู่','sensor offline'):s.depth<=5?T('แห้ง','dry'):`${s.depth}${s.step5&&s.depth>=20?'+':''} ${T('ซม.','cm')}`;
+const SRC_TH='ข้อมูล: สำนักการระบายน้ำ กรุงเทพมหานคร ผ่าน POPNIX Flood';
+const srcLine=()=>`<span class="src">${T(SRC_TH,'Data: BMA Drainage and Sewerage Dept. via POPNIX Flood')} (<a href="https://flood.pop.in.th/" target="_blank" rel="noopener">flood.pop.in.th</a>)${LIVE.flood?` · ${T('อัปเดต','updated')} ${whenTH(LIVE.flood.latest,true)}${LIVE.flood.stale?T(' (ข้อมูลอาจล่าช้า)',' (may be delayed)'):''}`:''} · ${T('ค่าที่จุดวัดเท่านั้น ไม่ใช่ประกาศเตือนภัยทางการ','readings at the sensor only, not an official warning')}</span>`;
+function floodAt(lat,lng,km=1.5){
+  if(!LIVE.flood)return {cls:'l0',state:'loading'};
+  const near=sensorsNear(lat,lng,km);
+  if(!near.length)return {cls:'l0',state:'none'};
+  const on=near.filter(x=>x.s.level!=='off'),wetNow=on.filter(x=>x.s.depth>5).sort((a,b)=>b.s.depth-a.s.depth);
+  const top=[...near].sort((a,b)=>b.s.max90-a.s.max90)[0],max=top.s.max90||0,days=Math.max(...near.map(x=>x.s.days90||0));
+  const nowMax=wetNow.length?wetNow[0].s.depth:0;
+  const cls=nowMax>10||max>=20?'l3':nowMax>5||max>10?'l2':'l1';
+  return {cls,state:'ok',near,wetNow,top,max,days};
+}
+function floodBodyHTML(r,km){
+  if(r.state==='loading')return `<span>${T('กำลังโหลดข้อมูลน้ำขังจริง…','Loading live flood data…')}</span>`;
+  if(r.state==='none')return `<span>${T(`ยังไม่มีจุดวัดน้ำบนถนนในรัศมี ${km} กม. จึงยังไม่มีข้อมูลจริงของบริเวณนี้ (ไม่ได้แปลว่าน้ำไม่ขัง) ควรถามเจ้าของห้องหรือคนในพื้นที่`,`No road flood sensor within ${km} km, so there is no real data for this spot yet (that doesn't mean it never floods). Ask the owner or locals.`)}${srcLine()}</span>`;
+  const n=r.near.length,h=histDays();
+  const now=r.wetNow.length?T(`ตอนนี้มีน้ำ ${depthTxt(r.wetNow[0].s)} ที่ ${esc(r.wetNow[0].s.name)}`,`Water now: ${depthTxt(r.wetNow[0].s)} at ${esc(r.wetNow[0].s.name)}`):T(`ตอนนี้แห้งทุกจุด (${n} จุดวัดในรัศมี ${km} กม.)`,`Dry now at all ${n} sensors within ${km} km`);
+  const past=r.max>0?T(`ย้อนหลัง ${h} วัน: สูงสุด ${r.max} ซม. ที่ ${esc(r.top.s.name)} (${whenTH(r.top.s.max90At,true)}) · มีน้ำขังเกิน 5 ซม. ${r.days} วัน`,`Past ${h} days: up to ${r.max} cm at ${esc(r.top.s.name)} (${whenTH(r.top.s.max90At,true)}) · over 5 cm on ${r.days} day${r.days>1?'s':''}`):T(`ย้อนหลัง ${h} วัน: ไม่พบน้ำขังเกิน 5 ซม.`,`Past ${h} days: no water above 5 cm`);
+  return `<span>${now}<br>${past}${srcLine()}</span>`;
+}
+function floodBoxAt(lat,lng,id){const km=1.5,r=floodAt(lat,lng,km);return `<div class="flood ${r.cls}" id="${id}" data-lat="${lat}" data-lng="${lng}"><b>${T('น้ำขัง','Flooding')}</b>${floodBodyHTML(r,km)}</div>`}
+function areaFloodHTML(){
+  const U=S.ui;if(U.area==='all'||U.mode==='mine'||!AREAS[U.area])return '<div id="areaFlood" hidden></div>';
+  const A=AREAS[U.area],km=2,r=floodAt(A.lat,A.lng,km);
+  return `<div class="flood ${r.cls}" id="areaFlood"><b>${esc(A.n)}</b>${floodBodyHTML(r,km)}</div>`;
+}
+function floodShort(d){const pos=postPos(d),r=floodAt(pos.lat,pos.lng,1.5);
+  if(r.state==='loading')return '…';if(r.state==='none')return T('ไม่มีจุดวัดใกล้','no sensor nearby');
+  return r.max>0?T(`สูงสุด ${r.max} ซม. (${histDays()} วัน)`,`up to ${r.max} cm (${histDays()} days)`):T(`ไม่พบเกิน 5 ซม. (${histDays()} วัน)`,`none above 5 cm (${histDays()} days)`)}
+function floodNoteKey(){return (LIVE.flood?LIVE.flood.latest:'x')+S.ui.city+(I18N.on?1:0)}
+function floodNoteHTML(){
+  const inBkk=S.ui.city==='bkk'||S.ui.city==='th';
+  if(!LIVE.flood)return `${ic('water',14)}<span><b>${T('จุดวัดน้ำบนถนน','Road flood sensors')}</b> ${T('กำลังโหลดข้อมูลจริง…','loading live data…')}</span>`;
+  if(!inBkk)return `${ic('water',14)}<span><b>${T('ยังไม่มีข้อมูลน้ำขังจริงของ','No real flood data yet for ')}${esc(curCity().n)}</b> ${T('ตอนนี้มีเฉพาะกรุงเทพฯ จากจุดวัดของ กทม.','only Bangkok sensors are available for now')}</span>`;
+  const sm=LIVE.flood.summary||{};
+  return `${ic('water',14)}<span><b>${T('จุดวัดน้ำบนถนน กทม. (ข้อมูลจริง)','BMA road flood sensors (live)')}</b> ${T(`ตอนนี้มีน้ำ ${(sm.flood||0)+(sm.slight||0)} จุด จาก ${sm.total||LIVE.flood.sensors.length} จุด · วงนอกคือระดับสูงสุดใน ${histDays()} วัน`,`${(sm.flood||0)+(sm.slight||0)} of ${sm.total||LIVE.flood.sensors.length} sensors wet now · outer ring = highest level in ${histDays()} days`)}${srcLine()}</span>`;
+}
+function floodSVG(){
+  if(!LIVE.flood||!(S.ui.city==='bkk'))return '';
+  return LIVE.flood.sensors.map(s=>{const [x,y]=P(s.lat,s.lng),c=FLC[s.level]||FLC.dry,r=s.depth>5?6:3.6,ring=s.max90>5?Math.min(14,5+s.max90/4):0;
+    return `${ring?`<circle class="fls" data-r="${ring}" cx="${x}" cy="${y}" r="${ring}" fill="#3B82F6" fill-opacity=".14" stroke="#3B82F6" stroke-opacity=".5" vector-effect="non-scaling-stroke"/>`:''}<circle class="fls" data-r="${r}" cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"><title>${esc(s.name)}: ${depthTxt(s)}</title></circle>`}).join('');
+}
+/* ---- MapLibre ---- */
+const GLVER='4.7.1',OFM='https://tiles.openfreemap.org/styles/';
+const GLTHEME={
+  day:{land:'#F5F5F7',land2:'#F0F0F3',water:'#D3E3F1',park:'#E2EEDC',building:'#E8E8EE',major:'#FFFFFF',majorCase:'#D8D8E2',minor:'#FFFFFF',minorCase:'#E6E6EC',rail:'#CFCFDA',label:'#55536B',halo:'#FFFFFF',stFill:'#FFFFFF',stText:'#2B2850'},
+  night:{land:'#17142B',land2:'#1B1833',water:'#0E2340',park:'#18291F',building:'#241F3D',major:'#3B3466',majorCase:'#2A2448',minor:'#2C2650',minorCase:'#221D3D',rail:'#5B4E9A',label:'#C9C3EA',halo:'#17142B',stFill:'#17142B',stText:'#F1EEFF'}
+};
+function brighten(hex){/* lift dark line colours so they read on the night map */
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return hex;let n=parseInt(m[1],16),r=n>>16,g=n>>8&255,b=n&255;
+  const l=(Math.max(r,g,b)+Math.min(r,g,b))/510;if(l>=.55)return hex;const k=.55/Math.max(l,.08)*.9,f=v=>Math.min(255,Math.round(v*k+40));
+  return '#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function loadGL(){
+  if(window.maplibregl)return Promise.resolve(true);if(loadGL.p)return loadGL.p;
+  loadGL.p=new Promise(res=>{
+    try{const c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl'))){res(false);return}}catch(e){res(false);return}
+    const l=document.createElement('link');l.rel='stylesheet';l.href=`https://unpkg.com/maplibre-gl@${GLVER}/dist/maplibre-gl.css`;document.head.appendChild(l);
+    const sc=document.createElement('script');sc.src=`https://unpkg.com/maplibre-gl@${GLVER}/dist/maplibre-gl.js`;
+    sc.onload=()=>res(!!window.maplibregl);sc.onerror=()=>res(false);document.head.appendChild(sc);setTimeout(()=>res(!!window.maplibregl),15000)});
+  return loadGL.p;
+}
+const PI=(x,y)=>{const c=curCity();return {lat:c.lat0-y/c.K,lng:x/(c.K*.972)+c.lng0}};
+function vbBounds(v){const a=PI(v.x,v.y),b=PI(v.x+v.w,v.y+v.h);return [[a.lng,b.lat],[b.lng,a.lat]]}
+function syncFromGL(){const g=M.gl;if(!g||!M.el)return;const a=g.unproject([0,0]),b=g.unproject([M.W,M.H]),[x0,y0]=P(a.lat,a.lng),[x1,y1]=P(b.lat,b.lng);M.vb={x:x0,y:y0,w:x1-x0,h:y1-y0};drawMap()}
+function startGL(){
+  const el=M.el;if(!el)return;
+  loadGL().then(ok=>{
+    if(!ok||M.el!==el||!document.body.contains(el)||M.gl)return;
+    const box=document.createElement('div');box.className='gl';el.prepend(box);
+    const theme=isDark()?'night':'day';let g;
+    try{g=new maplibregl.Map({container:box,style:OFM+'positron',bounds:vbBounds(M.vb),attributionControl:{compact:true},dragRotate:false,pitchWithRotate:false,touchPitch:false,maxZoom:18.5,minZoom:4.5,fadeDuration:0,cooperativeGestures:false})}catch(e){box.remove();return}
+    g.touchZoomRotate.disableRotation();g.keyboard.disableRotation();
+    M.gl=g;M.glTheme=theme;
+    const fail=()=>{if(M.glReady||M.gl!==g)return;try{g.remove()}catch(e){}box.remove();M.gl=null};
+    const to=setTimeout(fail,12000);
+    g.on('error',()=>{if(!M.glReady)fail()});
+    g.on('load',()=>{clearTimeout(to);if(M.gl!==g)return;restyleGL(GLTHEME[theme],theme);M.glReady=true;el.classList.add('glon');fitAspect();syncFromGL()});
+    g.on('move',syncFromGL);
+    g.on('dragstart',()=>{M.dragged=true;el.classList.add('drag')});g.on('dragend',()=>{el.classList.remove('drag');setTimeout(()=>M.dragged=false,0)});
+    const pop=(e,html)=>new maplibregl.Popup({closeButton:false,offset:10,maxWidth:'260px'}).setLngLat(e.lngLat).setHTML(html).addTo(g);
+    g.on('click','fl-pt',e=>{const s=e.features[0].properties;
+      pop(e,`<div class="fpop"><b>${esc(s.name)}</b><span class="lv"><i style="background:${FLC[s.level]||FLC.dry}"></i>${T('ตอนนี้','Now')}: ${s.dtxt}</span><small>${T('ย้อนหลัง','Past')} ${histDays()} ${T('วัน','days')}: ${s.max90>0?T(`สูงสุด ${s.max90} ซม.`,`up to ${s.max90} cm`):T('ไม่พบน้ำขังเกิน 5 ซม.','no water above 5 cm')}</small><small>${esc(s.district?T('เขต','District ')+s.district:'')} · ${T('วัดเมื่อ','measured')} ${whenTH(s.at,true)}</small></div>`)});
+    g.on('click','st-pt',e=>{const s=e.features[0].properties;pop(e,`<div class="fpop"><b>${esc(s.n)}</b><small>${esc(s.lines)}</small></div>`)});
+    ['fl-pt','st-pt'].forEach(id=>{g.on('mouseenter',id,()=>g.getCanvas().style.cursor='pointer');g.on('mouseleave',id,()=>g.getCanvas().style.cursor='')});
+  });
+}
+function restyleGL(c,theme){
+  const g=M.gl,st=g.getStyle(),lab=I18N.on?['coalesce',['get','name:en'],['get','name:latin'],['get','name']]:['coalesce',['get','name:th'],['get','name'],['get','name:latin']];
+  for(const l of st.layers){
+    const id=l.id,sl=l['source-layer']||'',t=l.type,set=(k,v)=>{try{g.setPaintProperty(id,k,v)}catch(e){}};
+    if(t==='background')set('background-color',c.land);
+    else if(t==='fill'){
+      if(sl==='water')set('fill-color',c.water);
+      else if(sl==='park'||/park|grass|wood|forest/.test(id))set('fill-color',c.park);
+      else if(sl==='building'){set('fill-color',c.building);set('fill-outline-color',c.building)}
+      else if(sl==='landuse'||sl==='landcover'||sl==='aeroway')set('fill-color',c.land2);
+    } else if(t==='fill-extrusion')set('fill-extrusion-color',c.building);
+    else if(t==='line'){
+      if(sl==='waterway')set('line-color',c.water);
+      else if(sl==='transportation'){const major=/motorway|trunk|primary|major/.test(id),cas=/casing|outline/.test(id);
+        if(/rail|transit|subway/.test(id))set('line-color',c.rail);else set('line-color',cas?(major?c.majorCase:c.minorCase):(major?c.major:c.minor))}
+      else if(sl==='boundary')set('line-color',c.rail);
+    } else if(t==='symbol'){
+      set('text-color',c.label);set('text-halo-color',c.halo);
+      if(/shield/.test(id)&&theme==='night'){try{g.setLayoutProperty(id,'visibility','none')}catch(e){}}
+      else if(l.layout&&l.layout['text-field']&&!/shield|housenumber/.test(id)){try{g.setLayoutProperty(id,'text-field',lab)}catch(e){}}
+    }
+  }
+  M.glFont=(st.layers.find(l=>l.type==='symbol'&&l.layout&&l.layout['text-font'])||{layout:{'text-font':['Noto Sans Regular']}}).layout['text-font'];
+  M.glC=c;M.glT=theme;M.glKeys={};
+}
+function railFC(){
+  const night=M.glT==='night',col=h=>night?brighten(h):h;
+  if(LIVE.transit&&LIVE.transit.lines&&LIVE.transit.lines.length){
+    const lines=LIVE.transit.lines,byCol={};lines.forEach(L=>byCol[L.colour]=I18N.on?(L.name_en||L.name):L.name);
+    return {lines:{type:'FeatureCollection',features:lines.map(L=>({type:'Feature',properties:{c:col(L.colour)},geometry:{type:'MultiLineString',coordinates:L.coords}}))},
+      st:{type:'FeatureCollection',features:LIVE.transit.stations.map(v=>({type:'Feature',properties:{n:I18N.on?(v.en||v.th):(v.th||v.en),c:col(v.colours[0]),x:v.colours.length>1?1:0,lines:v.colours.map(k=>byCol[k]).filter(Boolean).join(' · ')},geometry:{type:'Point',coordinates:[v.lng,v.lat]}}))}};
+  }
+  /* rail data not loaded yet: use the built-in station list so the lines are never missing */
+  const g=GEO[S.ui.city]||{rails:[]},seen=new Map();
+  g.rails.forEach(L=>L.s.forEach(([n,a,b])=>{const c=col(RAILS[L.k][1]);if(!seen.has(n))seen.set(n,{n,a,b,c:[c],l:[RAILS[L.k][0]]});else{seen.get(n).c.push(c);seen.get(n).l.push(RAILS[L.k][0])}}));
+  return {lines:{type:'FeatureCollection',features:g.rails.map(L=>({type:'Feature',properties:{c:col(RAILS[L.k][1])},geometry:{type:'LineString',coordinates:L.s.map(x=>[x[2],x[1]])}}))},
+    st:{type:'FeatureCollection',features:[...seen.values()].map(v=>({type:'Feature',properties:{n:v.n,c:v.c[0],x:v.c.length>1?1:0,lines:v.l.join(' · ')},geometry:{type:'Point',coordinates:[v.b,v.a]}}))}};
+}
+function floodFC(){
+  const f=LIVE.flood;if(!f)return {type:'FeatureCollection',features:[]};
+  return {type:'FeatureCollection',features:f.sensors.map(s=>({type:'Feature',properties:{name:s.name,level:s.level,depth:s.depth||0,dtxt:depthTxt(s),max90:s.max90||0,district:s.district||'',at:s.at,c:FLC[s.level]||FLC.dry},geometry:{type:'Point',coordinates:[s.lng,s.lat]}}))};
+}
+function glLayers(){
+  const g=M.gl,c=M.glC,L=S.ui.layers,k=M.glKeys;if(!g||!c)return;
+  const railKey=(LIVE.transit?LIVE.transit._fetched:'geo')+S.ui.city+(I18N.on?1:0);
+  if(k.rail!==railKey){k.rail=railKey;const d=railFC();
+    if(g.getSource('rail')){g.getSource('rail').setData(d.lines);g.getSource('st').setData(d.st)}
+    else{
+      g.addSource('rail',{type:'geojson',data:d.lines});g.addSource('st',{type:'geojson',data:d.st});
+      g.addLayer({id:'rail-case',type:'line',source:'rail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':c.halo,'line-width':['interpolate',['linear'],['zoom'],10,3,16,10]}});
+      g.addLayer({id:'rail',type:'line',source:'rail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','c'],'line-width':['interpolate',['linear'],['zoom'],10,1.8,16,6]}});
+      g.addLayer({id:'st-pt',type:'circle',source:'st',minzoom:10.5,paint:{'circle-radius':['interpolate',['linear'],['zoom'],10.5,['case',['==',['get','x'],1],3,2],16,['case',['==',['get','x'],1],9,6]],'circle-color':c.stFill,'circle-stroke-color':['get','c'],'circle-stroke-width':['case',['==',['get','x'],1],3,2]}});
+      g.addLayer({id:'st-name',type:'symbol',source:'st',minzoom:12.4,layout:{'text-field':['get','n'],'text-font':M.glFont,'text-size':['interpolate',['linear'],['zoom'],12.4,11.5,16,15],'text-offset':[0,1],'text-anchor':'top','text-max-width':8,'text-padding':2,'text-optional':true},paint:{'text-color':c.stText,'text-halo-color':c.halo,'text-halo-width':2.2,'text-halo-blur':.3}});
+    }}
+  const floodKey=(LIVE.flood?LIVE.flood._fetched:'none')+(I18N.on?1:0);
+  if(k.flood!==floodKey){k.flood=floodKey;const d=floodFC();
+    if(g.getSource('fl'))g.getSource('fl').setData(d);
+    else{
+      g.addSource('fl',{type:'geojson',data:d});
+      g.addLayer({id:'fl-ring',type:'circle',source:'fl',filter:['>',['get','max90'],5],paint:{'circle-radius':['interpolate',['linear'],['zoom'],10,['+',3,['/',['get','max90'],6]],16,['+',10,['/',['get','max90'],2]]],'circle-color':'#3B82F6','circle-opacity':M.glT==='night'?.24:.16,'circle-stroke-color':'#3B82F6','circle-stroke-opacity':.55,'circle-stroke-width':1}},'rail-case');
+      g.addLayer({id:'fl-pt',type:'circle',source:'fl',paint:{'circle-radius':['interpolate',['linear'],['zoom'],10,['case',['>',['get','depth'],5],5,2.6],16,['case',['>',['get','depth'],5],10,6]],'circle-color':['get','c'],'circle-stroke-color':c.halo,'circle-stroke-width':1.5}});
+      g.addLayer({id:'fl-txt',type:'symbol',source:'fl',minzoom:13.2,filter:['>',['get','depth'],5],layout:{'text-field':['get','dtxt'],'text-font':M.glFont,'text-size':12,'text-offset':[0,-1.3],'text-anchor':'bottom','text-optional':true},paint:{'text-color':'#C2272D','text-halo-color':c.halo,'text-halo-width':2}});
+    }}
+  const vis=(ids,on)=>ids.forEach(id=>{if(g.getLayer(id)&&k['v'+id]!==on){k['v'+id]=on;g.setLayoutProperty(id,'visibility',on?'visible':'none')}});
+  vis(['rail-case','rail','st-pt','st-name'],!!L.rail);vis(['fl-ring','fl-pt','fl-txt'],!!L.flood);
+}
 function measureTop(){document.documentElement.style.setProperty('--top-h',$('#top').offsetHeight+'px')}
-window.addEventListener('resize',()=>{measureTop();if(M.el&&document.body.contains(M.el)){const cx=M.vb.x+M.vb.w/2,cy=M.vb.y+M.vb.h/2;fitAspect();M.vb.x=cx-M.vb.w/2;M.vb.y=cy-M.vb.h/2;drawMap()}});
+window.addEventListener('resize',()=>{measureTop();if(M.el&&document.body.contains(M.el)&&M.glReady){fitAspect();M.gl.resize();syncFromGL();return}if(M.el&&document.body.contains(M.el)){const cx=M.vb.x+M.vb.w/2,cy=M.vb.y+M.vb.h/2;fitAspect();M.vb.x=cx-M.vb.w/2;M.vb.y=cy-M.vb.h/2;drawMap()}});
 
 </script>
 <script>
@@ -3084,13 +3285,12 @@ const PROV_ALL=[
  ['nwt','นราธิวาส',6.430,101.820,'s']
 ];
 (function(){
-  const FT='ข้อมูลน้ำขังโดยประมาณ ควรถามเจ้าของห้องหรือคนในพื้นที่เพิ่มเติม';
   PROV_ALL.forEach(([k,n,lat,lng,rg,extra])=>{
     const list=[['pv_'+k,'อ.เมือง'+n,lat,lng],['pv_'+k+'_o','รอบเมือง'+n,lat+.035,lng+.03],...(extra||[])];
     const la=list.map(x=>x[2]),ln=list.map(x=>x[3]),spread=Math.max(Math.max(...la)-Math.min(...la),Math.max(...ln)-Math.min(...ln));
     const K=spread>.4?2600:spread>.15?5200:9000,cLat=(Math.max(...la)+Math.min(...la))/2,cLng=(Math.max(...ln)+Math.min(...ln))/2;
     CITIES[k]={n,lat0:cLat+.5*Math.max(.12,spread)+.06,lng0:cLng-.5*Math.max(.12,spread)-.06,K,center:[cLat,cLng],w:Math.max(900,spread*K*1.5),rg};
-    list.forEach(([ak,an,a,b],i)=>{AREAS[ak]={c:k,p:k,z:i<2?'town':'out',n:an,lat:a,lng:b,fl:2,ft:FT}});
+    list.forEach(([ak,an,a,b],i)=>{AREAS[ak]={c:k,p:k,z:i<2?'town':'out',n:an,lat:a,lng:b}});
     ZONES[k]=[['town','ในเมือง'],['out','อำเภออื่น ๆ']];
     GEO[k]={rails:[],major:[],waters:[],land:null,parks:[[lat-.006,lng+.008,.006,.008]],
       roads:[[[lat+.08,lng-.004],[lat-.08,lng+.004]],[[lat+.004,lng-.09],[lat-.004,lng+.09]],[[lat+.04,lng-.05],[lat+.01,lng+.02],[lat-.03,lng+.06]],...(extra||[]).map(e=>[[lat,lng],[e[2],e[3]]])],
@@ -3222,7 +3422,7 @@ function stepArt(icon){
 /* decoration peeking out of each post-type card */
 function ptArt(k){
   const u='pa'+(++_artN);
-  const g={room:['#5B4BDB','#E07ADB'],seek:['#F0704F','#FFB45A'],pair:['#2E7FD9','#22B5C9'],owner:['#FF9F1C','#FFE45E'],item:['#0B9A63','#8EDC6A']}[k];
+  const g={room:['#5B4BDB','#E07ADB'],seek:['#F0704F','#FFB45A'],pair:['#2E7FD9','#22B5C9'],owner:['#FFC81F','#FFEC70'],item:['#0B9A63','#8EDC6A']}[k];
   const A={
    room:`${_house(4,6,.62,u)}${_person(96,46,1,'#F07FB0','#5A3A30')}`,
    seek:`<circle cx="44" cy="40" r="22" fill="none" stroke="url(#${u})" stroke-width="8"/><path d="M60 56l20 20" stroke="url(#${u})" stroke-width="10" stroke-linecap="round"/>${_person(96,40,1,'#FFA04D','#2E2230','#EDB894')}`,
@@ -3840,7 +4040,7 @@ function bindHero(){
 }
 
 function vExplore(){
-  const L=S.ui.layers,hasRail=GEO[S.ui.city].rails.length>0,split=S.ui.layout==='split';
+  const L=S.ui.layers,hasRail=GEO[S.ui.city].rails.length>0||S.ui.city==='th',split=S.ui.layout==='split';
   return `<section class="view">
   ${heroHTML()}
   <div class="ex-head" id="exHead"></div>
@@ -3857,8 +4057,8 @@ function vExplore(){
         <button class="layer" data-layer="flood" aria-pressed="${L.flood}">${ic('water',15)}จุดน้ำขัง</button>
       </div>
       <div class="mapctl"><button id="zin" aria-label="ซูมเข้า" type="button">+</button><button id="zout" aria-label="ซูมออก" type="button">−</button><button id="zfit" aria-label="กลับไปที่ย่านที่เลือก" type="button">${ic('pin',16)}</button></div>
-      <div class="legend"><span><i class="dot room"></i>หารูมเมท</span><span><i class="dot owner"></i>ห้องว่างให้เช่า</span><span><i class="dot seek"></i>ขอเข้าร่วมห้อง</span><span><i class="dot pair"></i>รวมทีมหาห้อง</span><span><i class="dot item"></i>ส่งต่อของใช้</span><span><i class="dot mine"></i>โพสต์ของคุณ</span><span class="hint">แผนที่เป็นข้อมูลจำลอง</span></div>
-      <div class="floodnote" id="floodNote" ${L.flood?'':'hidden'}>${ic('water',14)}<span><b>จุดน้ำขัง (ข้อมูลตัวอย่าง)</b> ในเวอร์ชันจริงจะใช้ข้อมูลจุดเสี่ยงน้ำท่วมขังจากสำนักการระบายน้ำ กรุงเทพมหานคร และรายงานจากผู้ใช้ · อัปเดตล่าสุด ต.ค. 2569 (ตัวอย่าง)</span></div>
+      <div class="legend"><span><i class="dot room"></i>หารูมเมท</span><span><i class="dot owner"></i>ห้องว่างให้เช่า</span><span><i class="dot seek"></i>ขอเข้าร่วมห้อง</span><span><i class="dot pair"></i>รวมทีมหาห้อง</span><span><i class="dot item"></i>ส่งต่อของใช้</span><span><i class="dot mine"></i>โพสต์ของคุณ</span><span class="hint">ประกาศในเวอร์ชันทดลองเป็นตัวอย่าง · แผนที่ © OpenStreetMap · น้ำขัง: สำนักการระบายน้ำ กทม. ผ่าน POPNIX Flood</span></div>
+      <div class="floodnote" id="floodNote" ${L.flood?'':'hidden'}></div>
       <div class="zoomhint" id="zoomhint" hidden>ซูมเข้าเพื่อดูสถานที่ใกล้ ๆ</div>
     </div></div>`:''}
   </div>
@@ -3982,11 +4182,10 @@ function cardHTML(x){
 }
 function renderResults(){
   const items=filtered(),U=S.ui,areaName=U.mode==='mine'?'โพสต์ของฉัน':U.area==='all'?curCity().n:areaLabel(U.area);
-  const fl=U.area!=='all'&&U.mode!=='mine'?AREAS[U.area]:null;
   $('#exList').innerHTML=`
     <div class="listhead"><b>${items.length} โพสต์${U.mode==='mine'?'':'ใน'+esc(areaName)}</b>
       <select id="sortSel" aria-label="เรียงลำดับ">${opts([['match','ตรงกับฉันมากสุด'],['price','ราคาต่ำสุด'],['new','อัปเดตล่าสุด'],['views','ยอดเข้าชมมากสุด']],U.sort)}</select></div>
-    ${fl?`<div class="flood l${fl.fl}"><b>ช่วงฝนตก</b><span>${esc(fl.n)}: ความเสี่ยงน้ำขัง${FLOODLV[fl.fl]} · ${esc(fl.ft)} <span class="hint">(ข้อมูลจำลอง)</span></span></div>`:''}
+    ${areaFloodHTML()}
     ${U.mode==='mine'&&!items.length?`<div class="panel empty"><p>ยังไม่มีโพสต์ของคุณ</p><button class="btn primary" data-go="create">${ic('plus',16)} ลงประกาศ</button></div>`:''}
     <div class="cgrid">${items.length?items.map(cardHTML).join(''):U.mode==='mine'?'':`<div class="panel empty"><p>ไม่มีโพสต์ที่ตรงกับที่เลือกในย่านนี้</p><button class="btn sm" id="emptyClear">ล้างตัวกรองและดูทุกย่าน</button></div>`}</div>`;
   $('#sortSel').onchange=e=>{U.sort=e.target.value;save();renderResults()};
@@ -4323,7 +4522,7 @@ function lifeCompareHTML(theirs,mine,tName,mName,sched,mSched){
 }
 const amenHTML=d=>`<div class="amen">${d.has.map(h=>`<span>${ic('check',14)}${FEATS[h]}</span>`).join('')}<span>${ic('washer',14)}${label(WASHER,d.washer)}</span></div>`;
 const nearHTML=n=>`<ul class="near">${n.map(x=>`<li><i style="background:${POI[x.t][2]}"></i>${POI[x.t][0]}<span>${x.d} ม.</span></li>`).join('')}</ul>`;
-const floodBox=A=>A?`<div class="flood l${A.fl}"><b>ช่วงฝนตก</b><span>ความเสี่ยงน้ำขัง${FLOODLV[A.fl]} · ${esc(A.ft)}<br><span class="hint">ข้อมูลจำลอง เวอร์ชันจริงใช้ข้อมูลหน่วยงานท้องถิ่นร่วมกับรายงานจากผู้ใช้</span></span></div>`:'';
+const floodBox=d=>{const pos=postPos(d);return floodBoxAt(pos.lat,pos.lng,'dFlood')};
 const travelHTML=r=>`<div class="facts">${arr(r.rails&&r.rails.length?r.rails:r.rail?[r.rail]:[]).map(x=>`<span class="chip rail" style="--lc:${RAILS[x.line][1]}">${RAILS[x.line][0]} ${esc(x.station)} · เดิน ${x.walk} ม.</span>`).join('')||'<span class="chip">ไม่ติดรถไฟฟ้า</span>'}${(r.transit||[]).map(t=>`<span class="chip">${TRANSIT[t]}</span>`).join('')}${r.has.includes('shuttle')?'<span class="chip teal">มีรถรับส่ง</span>':''}</div>`;
 const parkRows=p=>[['รถยนต์',PCAR[p.car]+(p.carFee?` · ${thb(p.carFee)}/เดือน`:'')],['มอเตอร์ไซค์',PSMALL[p.moto]+(p.motoFee?` · ${thb(p.motoFee)}/เดือน`:'')],['จักรยาน/สกูตเตอร์',PSMALL[p.bike||'unknown']]];
 const costBox=d=>{const c=costOf(d);return c?`<section class="costbox"><div class="cb-head">${ic('money',20)}<div><b>ค่าใช้จ่ายรวมต่อเดือน</b><span>${c.note}</span></div><strong class="num">${thb(c.total)}<small>/คน</small></strong></div><div class="cb-rows">${c.rows.map(r=>`<span>${r[0]}</span><b class="num">${thb(r[1])}</b>`).join('')}</div></section>`:''};
@@ -4375,7 +4574,7 @@ function paneHTML(d,tab){
   if(tab==='reviews')return placeReviewHTML(d);
   if(tab==='place')return `<section class="dsec"><h3>${ic('train',18)} การเดินทาง</h3>${travelHTML(d)}${d.stationDist?`<p class="small muted">${esc(d.stationDist)}</p>`:''}</section>
     <section class="dsec"><h3>${ic('pin',18)} ใกล้ที่พัก</h3>${nearHTML(d.nearby)}${d.nearbyText?`<p class="small muted">${esc(d.nearbyText)}</p>`:''}</section>
-    <section class="dsec"><h3>${ic('warn',18)} ความเสี่ยงน้ำขัง</h3>${floodBox(A)}</section>`;
+    <section class="dsec"><h3>${ic('warn',18)} น้ำขังจากจุดวัดจริง</h3>${floodBox(d)}</section>`;
   if(tab==='life'){
     if(d.mine)return lifeCompareHTML(d.life,null,'คุณ','',d.sched);
     return `${!me?`<div class="matchbox"><b>อยากรู้ว่าเข้ากันแค่ไหน?</b><p class="small">ตอบแบบสอบถามไลฟ์สไตล์ครั้งเดียว ระบบจะเทียบคำตอบให้ทุกโพสต์</p><div><button class="btn sm primary" data-go="life">ตอบแบบสอบถามไลฟ์สไตล์</button></div></div>`:''}
@@ -4526,7 +4725,7 @@ function comparePlaces(){
     ['สัญญา/อยู่ขั้นต่ำ',d=>(d.kind==='room'?d.minMonths:d.contractM)+' เดือน'],
     ['ทดลองอยู่',d=>d.kind==='room'?label(TRIAL,d.trial):'-'],
     ['รีวิวที่พัก',d=>{const r=placeRating(d.id);return r?`${ic('star',13)} ${r.avg.toFixed(1)} (${r.n})`:'ยังไม่มี'}],
-    ['น้ำขังช่วงฝน',d=>FLOODLV[AREAS[d.area].fl]],
+    ['น้ำขัง (จุดวัดจริง)',d=>`<span data-cmpflood="${d.id}">${floodShort(d)}</span>`],
     ...(me?[['ไลฟ์สไตล์เข้ากับคุณ',d=>d.life?`${compat(me,d.life).total}%`:'-']]:[]),
     ...Object.keys(FEATS).filter(f=>ps.some(d=>d.has.includes(f))).map(f=>[FEATS[f],d=>d.has.includes(f)?`<span class="yes">${ic('check',16)}</span>`:'<span class="no">–</span>'])
   ];
@@ -4575,8 +4774,6 @@ function openAuth(mode,why){
       <label class="f">ชื่อบัญชี (username) <small>a–z 0–9 . _ ยาว 4–20 ตัว</small><span class="atfield"><b>@</b><input type="text" name="handle" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" placeholder="sasiyada22"></span><span class="hstat" id="hStat" aria-live="polite"></span></label>
       <div class="authprev" id="authPrev" hidden></div>
       <fieldset class="idbox"><legend>ข้อมูลตามบัตรประชาชน <small>ไม่แสดงให้ผู้ใช้อื่นเห็น คนอื่นเห็นแค่ชื่อที่แสดงและอายุ</small></legend>
-        <button type="button" class="thaid-btn" data-thaid><span class="thaid-mk" aria-hidden="true">ThaiD</span><span><b>ดึงข้อมูลจากแอป ThaiD</b><small>กรอกชื่อ นามสกุล วันเกิดให้อัตโนมัติ และนับเป็นการยืนยันตัวตนไปเลย ไม่ต้องถ่ายบัตรซ้ำทีหลัง</small></span>${ic('right',18)}</button>
-        <div class="orline"><span>หรือกรอกเอง</span></div>
         <div class="grid2"><label class="f">ชื่อจริง<input type="text" name="fname" autocomplete="given-name" maxlength="40"></label><label class="f">นามสกุล<input type="text" name="lname" autocomplete="family-name" maxlength="40"></label></div>
         <label class="f">วันเกิด <small id="ageOut">ใช้คำนวณอายุ ต้องอายุ 18 ปีขึ้นไป</small><input type="date" name="dob" autocomplete="bday" max="${new Date(Date.now()-18*365.25*864e5).toISOString().slice(0,10)}"></label>
         <p class="hint" id="idHint">ถ้ากรอกเอง ตอนยืนยันตัวตนระบบจะเทียบชื่อและวันเกิดกับบัตรประชาชน ถ้าไม่ตรงต้องแก้ก่อนจึงจะได้เครื่องหมายยืนยัน</p>
@@ -4610,14 +4807,10 @@ function openAuth(mode,why){
     f.handle.oninput=upd;f.nick.oninput=upd;f.querySelectorAll('[name=av]').forEach(r=>r.onchange=()=>{AUTH.photo='';const t=f.querySelector('.avup');t.classList.remove('on');t.querySelector('span').innerHTML=`${ic('cam',20)}<small>อัปโหลด</small>`;upd()});
     f.dob.onchange=()=>{const a=ageOf(f.dob.value),o=$('#ageOut');o.textContent=a===''?T('ใช้คำนวณอายุ ต้องอายุ 18 ปีขึ้นไป','Used to work out your age; you must be 18+'):a<18?T(`อายุ ${a} ปี · ต้องอายุ 18 ปีขึ้นไป`,`Age ${a} · you must be 18 or older`):T(`อายุ ${a} ปี`,`Age ${a}`);o.classList.toggle('bad',a!==''&&a<18);upd()};
     $('#suPhoto').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;try{AUTH.photo=await compressImage(fl,480);f.querySelectorAll('[name=av]').forEach(r=>r.checked=false);const t=f.querySelector('.avup');t.classList.add('on');t.querySelector('span').innerHTML=`<img src="${AUTH.photo}" alt="รูปที่อัปโหลด">`;upd()}catch(x){toast('อ่านไฟล์รูปไม่ได้')}};
-    f.querySelector('[data-thaid]').onclick=e=>{const b=e.currentTarget;if(AUTH.thaid)return;b.classList.add('busy');b.querySelector('b').textContent=T('กำลังเปิดแอป ThaiD…','Opening the ThaiD app…');
-      setTimeout(()=>{AUTH.thaid=true;const D={fname:'สมใจ',lname:'ใจดี',dob:'2004-03-15'};['fname','lname','dob'].forEach(k=>{f[k].value=D[k];f[k].readOnly=true;f[k].closest('label').classList.add('locked')});
-        b.classList.remove('busy');b.classList.add('done');b.innerHTML=`<span class="thaid-mk" aria-hidden="true">ThaiD</span><span><b>${ic('check',15)} ${T('ยืนยันตัวตนผ่าน ThaiD แล้ว','Verified with ThaiD')}</b><small>${T('ชื่อ นามสกุล และวันเกิดมาจากบัตรประชาชน แก้ไม่ได้ (ตัวอย่างนี้ใช้ข้อมูลสมมติ)','Name and date of birth come from your ID card and can\'t be edited (this demo uses made-up data)')}</small></span>`;
-        $('#idHint').textContent=T('ข้อมูลนี้มาจาก ThaiD จึงไม่ต้องถ่ายบัตรหรือสแกนหน้าซ้ำในขั้นยืนยันตัวตน','This came from ThaiD, so you won\'t need to photograph your ID or scan your face again.');f.dob.onchange()},1100)};
   }
   f.onsubmit=e=>{e.preventDefault();const fd=new FormData(f),err=$('#authErr');let bad='';
     if(m==='signup'){const h=String(fd.get('handle')||''),pw=String(fd.get('pw')||''),ph=String(fd.get('phone')||'').replace(/\D/g,'');
-      const age=ageOf(fd.get('dob'));bad=!String(fd.get('nick')||'').trim()?'กรอกชื่อที่แสดง':!handleOk(h)?'ตั้งชื่อบัญชีให้ถูกรูปแบบ':handleTaken(h)?'ชื่อบัญชีนี้มีคนใช้แล้ว':!String(fd.get('fname')||'').trim()||!String(fd.get('lname')||'').trim()?'กรอกชื่อจริงและนามสกุล หรือดึงข้อมูลจาก ThaiD':age===''?'กรอกวันเกิด':age<18?'ต้องอายุ 18 ปีขึ้นไปจึงจะสมัครได้':!/^\S+@\S+\.\S+$/.test(String(fd.get('email')||''))?'กรอกอีเมลให้ถูกต้อง':!/^0\d{8,9}$/.test(ph)?'กรอกเบอร์โทร 9–10 หลัก ขึ้นต้นด้วย 0':pwScore(pw)<2||pw.length<8?'รหัสผ่านยังอ่อนเกินไป ทำให้ถึงระดับ "ดี" ขึ้นไป':pw!==fd.get('pw2')?'ยืนยันรหัสผ่านไม่ตรงกัน':!fd.get('ag')?'เลือกเพศ':!fd.get('terms')?'กดยอมรับเงื่อนไขการใช้งานก่อน':'';
+      const age=ageOf(fd.get('dob'));bad=!String(fd.get('nick')||'').trim()?'กรอกชื่อที่แสดง':!handleOk(h)?'ตั้งชื่อบัญชีให้ถูกรูปแบบ':handleTaken(h)?'ชื่อบัญชีนี้มีคนใช้แล้ว':!String(fd.get('fname')||'').trim()||!String(fd.get('lname')||'').trim()?'กรอกชื่อจริงและนามสกุล':age===''?'กรอกวันเกิด':age<18?'ต้องอายุ 18 ปีขึ้นไปจึงจะสมัครได้':!/^\S+@\S+\.\S+$/.test(String(fd.get('email')||''))?'กรอกอีเมลให้ถูกต้อง':!/^0\d{8,9}$/.test(ph)?'กรอกเบอร์โทร 9–10 หลัก ขึ้นต้นด้วย 0':pwScore(pw)<2||pw.length<8?'รหัสผ่านยังอ่อนเกินไป ทำให้ถึงระดับ "ดี" ขึ้นไป':pw!==fd.get('pw2')?'ยืนยันรหัสผ่านไม่ตรงกัน':!fd.get('ag')?'เลือกเพศ':!fd.get('terms')?'กดยอมรับเงื่อนไขการใช้งานก่อน':'';
       if(bad){err.textContent=bad;err.hidden=false;return}
       AUTH.pending={avatar:fd.get('av')||'a11',photo:AUTH.photo||'',nick:String(fd.get('nick')).trim(),handle:h,contact:String(fd.get('email')),phone:ph,gender:fd.get('ag'),fname:String(fd.get('fname')).trim(),lname:String(fd.get('lname')).trim(),dob:String(fd.get('dob')),age,thaid:!!AUTH.thaid};otpStep();return}
     const c=String(fd.get('contact')||'').trim(),pw=String(fd.get('pw')||'');
@@ -4644,7 +4837,7 @@ function otpStep(){
   $('[data-authback]').onclick=()=>openAuth('signup',AUTH.why);
   $('#fOtp').onsubmit=e=>{e.preventDefault();const code=boxes.map(b=>b.value).join(''),err=$('#otpErr');
     if(code!=='123456'){err.textContent='รหัสไม่ถูกต้อง ลองอีกครั้ง';err.hidden=false;boxes.forEach(b=>{b.value='';b.classList.add('shake')});boxes[0].focus();setTimeout(()=>boxes.forEach(b=>b.classList.remove('shake')),400);return}
-    const th=P.thaid;delete P.thaid;S.user=newUser({...P,phoneOk:true});S.user.kyc.phone=true;if(th)Object.assign(S.user.kyc,{idDoc:true,face:true,status:'verified',method:'thaid',at:Date.now()});TAKEN.add(P.handle);S.listing.posted=false;seedAccount(false);save();closeModal();toast(th?'สร้างบัญชีและยืนยันตัวตนผ่าน ThaiD เรียบร้อย':'สร้างบัญชีแล้ว ยืนยันตัวตนเพิ่มเพื่อให้คนอื่นมั่นใจมากขึ้น');go('profile')};
+    const th=P.thaid;delete P.thaid;S.user=newUser({...P,phoneOk:true});S.user.kyc.phone=true;TAKEN.add(P.handle);S.listing.posted=false;seedAccount(false);save();closeModal();toast('สร้างบัญชีแล้ว ยืนยันตัวตนเพิ่มเพื่อให้คนอื่นมั่นใจมากขึ้น');go('profile')};
 }
 function closeModal(){$('#modalRoot').innerHTML=''}
 function drawerHTML(){
@@ -4673,7 +4866,7 @@ function vProfile(){
       <button class="pavatar" type="button" data-pick="avatar" title="เปลี่ยนรูปโปรไฟล์">${u.photo?`<img src="${u.photo}" alt="รูปโปรไฟล์">`:avSvg(u.avatar||avHash(u.nick))}<i>${ic('cam',16)}</i></button>
       <div><h1>${esc(u.nick)} ${gIcon(u.gender||'ไม่ระบุ')} ${vBadge(k.status==='verified')}</h1><p class="handle big">@${esc(u.handle||'')}</p><p class="muted small">สมาชิกตั้งแต่ ${new Date(u.joinedAt).toLocaleDateString(LOC(),{month:'long',year:'numeric'})}${u.demo?' · บัญชีตัวอย่าง':''}</p></div></div>
       <div class="pstats"><button data-go="mine"><b class="num">${allPosts().filter(x=>x.mine).length}</b><span>โพสต์</span></button><button data-go="liked"><b class="num">${S.liked.length}</b><span>ถูกใจ</span></button><button data-go="saved"><b class="num">${S.saved.length}</b><span>บันทึกไว้</span></button></div></div>
-    <div class="kyccard ${k.status}">${ic('shield',28)}<div><b>${k.status==='verified'?'ยืนยันตัวตนแล้ว':k.status==='pending'?'กำลังตรวจสอบตัวตน':'ยังไม่ได้ยืนยันตัวตน'}</b><p class="small">${k.status==='verified'?`ผู้ใช้อื่นจะเห็นเครื่องหมายยืนยันบนโพสต์และโปรไฟล์ของคุณ · ${dateTh(new Date(k.at).toISOString().slice(0,10))}`:'ยืนยันผ่าน ThaiD ได้ในขั้นตอนเดียว หรือถ่ายบัตรและสแกนหน้า ใช้เวลาประมาณ 3 นาที'}</p></div>${k.status==='verified'?'':`<button class="btn primary" data-go="kyc">${k.status==='pending'?'ดูสถานะ':'เริ่มยืนยันตัวตน'}</button>`}</div>
+    <div class="kyccard ${k.status}">${ic('shield',28)}<div><b>${k.status==='verified'?'ยืนยันตัวตนแล้ว':k.status==='pending'?'กำลังตรวจสอบตัวตน':'ยังไม่ได้ยืนยันตัวตน'}</b><p class="small">${k.status==='verified'?`ผู้ใช้อื่นจะเห็นเครื่องหมายยืนยันบนโพสต์และโปรไฟล์ของคุณ · ${dateTh(new Date(k.at).toISOString().slice(0,10))}`:'ถ่ายบัตรประชาชนและสแกนใบหน้า ใช้เวลาประมาณ 3 นาที'}</p></div>${k.status==='verified'?'':`<button class="btn primary" data-go="kyc">${k.status==='pending'?'ดูสถานะ':'เริ่มยืนยันตัวตน'}</button>`}</div>
     ${(()=>{const r=residNorm(u.resid),dv=!!r.dev,mg=!!(r.mgr&&r.mgr.status==='verified'),pend=r.mgr&&r.mgr.status==='pending';return `<div class="kyccard resid ${dv||mg?'verified':''}">${ic('pin',28)}<div><b>${dv||mg?`ยืนยันที่พักแล้ว ${(dv?1:0)+(mg?1:0)}/2`:pend?'รอผู้ดูแลที่พักยืนยัน':'ยืนยันที่พัก (ไม่บังคับ)'}</b><p class="small">${dv||mg?esc(r.building):'ยืนยันได้ 2 วิธี เช็กอินที่ตึกตอนกลางคืน 3 คืน และผู้ดูแลที่พักหรือสัญญาเช่า ได้ป้ายแยกกัน'}</p>${dv||mg?`<div class="rbadges">${dv?`<span class="rbadge dev">${ic('pin',12)} ${RB.dev[1]}</span>`:''}${mg?`<span class="rbadge mgr">${ic('owner',12)} ${RB.mgr[1]}</span>`:''}</div>`:''}</div><button class="btn${dv&&mg?'':' primary'}" data-go="resid">${dv&&mg?'ดูรายละเอียด':dv||mg?'ยืนยันอีกวิธี':'ยืนยันที่พัก'}</button></div>`})()}
     ${apptPanelHTML()}
     <form id="fProfile" class="panel stack" novalidate><h2>ข้อมูลส่วนตัว</h2>
@@ -4710,7 +4903,7 @@ function vKyc(){
      :`<p>ตรวจสอบข้อมูลครบแล้ว กดส่งเพื่อให้ทีมงานตรวจสอบ</p><ul class="checklist">${KYCSTEPS.slice(0,3).map(([k2,,l])=>`<li class="ok"><span class="mk">${ic('check',12)}</span><span>${l}</span></li>`).join('')}</ul><label class="check"><input type="checkbox" id="kConsent"><span>ยินยอมให้ ROOMER ใช้ข้อมูลบัตรและใบหน้าเพื่อยืนยันตัวตนตามนโยบายความเป็นส่วนตัว</span></label><button class="btn primary" id="kSubmit" type="button">ส่งตรวจสอบ</button>`
   ];
   const u=S.user,typed=[u.fname,u.lname].filter(Boolean).join(' ');
-  const thaid=k.status==='none'&&!k.idDoc?`<div class="panel thaidcard"><span class="thaid-mk big" aria-hidden="true">ThaiD</span><div><b>วิธีที่เร็วที่สุด: ยืนยันผ่านแอป ThaiD</b><p class="small muted">${T('แอปของกรมการปกครอง ใช้แทนการถ่ายบัตรและสแกนหน้า ระบบได้ชื่อ นามสกุล และวันเกิดจากทะเบียนราษฎร์โดยตรง จึงปลอมข้อมูลไม่ได้','The Department of Provincial Administration\'s app replaces the ID photo and face scan. Your name and date of birth come straight from the civil registry, so they can\'t be faked')}${typed?T(` และจะเทียบกับชื่อที่คุณกรอกไว้ (${esc(typed)})`,`, and we compare them with the name you entered (${esc(typed)})`):''}</p></div><button class="btn primary" type="button" id="kThaid">ยืนยันผ่าน ThaiD</button></div><div class="orline"><span>หรือถ่ายบัตรประชาชนและสแกนใบหน้า</span></div>`:'';
+  const thaid='';
   return `<section class="view narrow"><div class="pagehead"><p class="eyebrow">ยืนยันตัวตน</p><h1>ยืนยันว่าเป็นคนจริง เพื่อความปลอดภัยของทุกคน</h1><p class="muted">คนที่ยืนยันตัวตนแล้วได้รับการตอบกลับมากกว่า และช่วยลดปัญหาโกงมัดจำหรือแอบอ้าง</p></div>
     ${thaid}<ol class="kycsteps">${KYCSTEPS.map(([k2,icn,l],i)=>`<li class="${i<cur?'done':i===cur?'cur':''}"><span>${i<cur?ic('check',16):ic(icn,16)}</span>${l}</li>`).join('')}</ol>
     <div class="panel stack">${body[cur]}</div>
@@ -4723,7 +4916,6 @@ function bindKyc(){
   const id=$('#kId');if(id)id.onchange=e=>{if(e.target.files[0]){k.idDoc=true;toast('ได้รับรูปบัตรแล้ว');rr()}};
   const fc=$('#kFace');if(fc)fc.onchange=e=>{if(e.target.files[0]){k.face=true;toast('สแกนใบหน้าเรียบร้อย');rr()}};
   const sb=$('#kSubmit');if(sb)sb.onclick=()=>{if(!$('#kConsent').checked){toast('กดยินยอมก่อนส่ง');return}k.status='pending';k.at=Date.now();notify('ส่งข้อมูลยืนยันตัวตนแล้ว กำลังตรวจสอบ','shield','kyc');rr()};
-  const td=$('#kThaid');if(td)td.onclick=()=>{td.disabled=true;td.textContent=T('กำลังเปิดแอป ThaiD…','Opening the ThaiD app…');setTimeout(()=>{const u=S.user;if(!u.fname){u.fname='สมใจ';u.lname='ใจดี';u.dob=u.dob||'2004-03-15'}Object.assign(k,{phone:true,idDoc:true,face:true,status:'verified',method:'thaid',at:Date.now()});if(u.dob)u.age=ageOf(u.dob);notify('ยืนยันตัวตนผ่าน ThaiD สำเร็จ','shield','profile');rr();toast('ยืนยันตัวตนผ่าน ThaiD สำเร็จ ชื่อตรงกับที่กรอกไว้')},1100)};
   const sim=$('#kSim');if(sim)sim.onclick=()=>{k.status='verified';k.at=Date.now();notify('ยืนยันตัวตนสำเร็จ ตอนนี้โพสต์ของคุณมีเครื่องหมายยืนยันแล้ว','shield','profile');rr();toast('ยืนยันตัวตนสำเร็จ')};
 }
 function vLife(){
@@ -5143,7 +5335,7 @@ function bindApptPanel(){
 <script>
 /* ================= share card: save one of my posts as a picture (PNG) or PDF, with the ROOMER watermark ================= */
 const SC_W=1080,SC_H=1350;
-const SC_GRAD={room:['#4F3BDB','#8B5CF6','#E07ADB'],seek:['#E85A3C','#FF8A5B','#FFC15A'],pair:['#1E6BC4','#2E8FE0','#2DC2C8'],owner:['#FF9F1C','#FFC531','#FFE45E'],item:['#0B9A63','#25C17E','#8EDC6A']};
+const SC_GRAD={room:['#4F3BDB','#8B5CF6','#E07ADB'],seek:['#E85A3C','#FF8A5B','#FFC15A'],pair:['#1E6BC4','#2E8FE0','#2DC2C8'],owner:['#FFC81F','#FFD93D','#FFEC70'],item:['#0B9A63','#25C17E','#8EDC6A']};
 function _scImg(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src})}
 function _svgUrl(svg){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
 function _logoSvgs(ink){
@@ -5469,6 +5661,7 @@ const EN_PHRASE={"02-000-0000 (ตัวอย่าง)":"02-000-0000 (sample)"
 </script>
 <script>
 /* v7 strings */
+Object.assign(EN_EXACT,{"กรอกชื่อจริงและนามสกุล": "Enter your first and last name", "ถ่ายบัตรประชาชนและสแกนใบหน้า ใช้เวลาประมาณ 3 นาที": "Photograph your ID card and scan your face. Takes about 3 minutes", "สร้างบัญชีแล้ว ยืนยันตัวตนเพิ่มเพื่อให้คนอื่นมั่นใจมากขึ้น": "Account created. Verify your identity so others can trust you more", "น้ำขังจากจุดวัดจริง": "Flooding from real sensors", "น้ำขัง (จุดวัดจริง)": "Flooding (real sensors)", "ประกาศในเวอร์ชันทดลองเป็นตัวอย่าง · แผนที่ © OpenStreetMap · น้ำขัง: สำนักการระบายน้ำ กทม. ผ่าน POPNIX Flood": "Beta listings are samples · Map © OpenStreetMap · Flooding: BMA Drainage Dept. via POPNIX Flood", "จุดวัดน้ำบนถนน": "Road flood sensors"});
 Object.assign(EN_EXACT,{"ความเสี่ยงน้ำขังปานกลาง · ซอยลึกบางซอยน้ำขัง 30 นาที": "Medium flood risk · some deep sois flood for 30 minutes", "ความเสี่ยงน้ำขังปานกลาง · ซอยแคบบางซอยน้ำขัง 30–60 นาที": "Medium flood risk · some narrow sois flood for 30–60 minutes", "ความเสี่ยงน้ำขังปานกลาง · น้ำขังเป็นจุด ๆ ในซอย ระบายได้ภายใน 1 ชม.": "Medium flood risk · puddles in spots along the soi, drains within 1 hour", "ความเสี่ยงน้ำขังปานกลาง · น้ำขังในซอยย่อย 30–60 นาทีหลังฝนหนัก ถนนใหญ่ระบายได้": "Medium flood risk · side sois flood 30–60 minutes after heavy rain; main roads drain", "ความเสี่ยงน้ำขังสูง · บางซอยน้ำขังนานกว่า 1 ชม. ควรถามชั้นที่พักและเส้นทางเลี่ยง": "High flood risk · some sois flood for over an hour; ask about the floor and detour routes", "ต้นข้าว · อยู่ด้วยกัน 10 เดือน · ยืนยันผ่านข้อตกลงในระบบ": "Tonkhao · lived together 10 months · verified by an in-app agreement", "นุ้ย · อยู่ด้วยกัน 7 เดือน · ยืนยันผ่านข้อตกลงในระบบ": "Nui · lived together 7 months · verified by an in-app agreement", "มายด์ · อยู่ด้วยกัน 12 เดือน · ยืนยันผ่านข้อตกลงในระบบ": "Mind · lived together 12 months · verified by an in-app agreement", "ปลา · อยู่ด้วยกัน 8 เดือน · ยืนยันผ่านข้อตกลงในระบบ": "Pla · lived together 8 months · verified by an in-app agreement", "เฟิร์น · อยู่ด้วยกัน 6 เดือน · ยืนยันผ่านข้อตกลงในระบบ": "Fern · lived together 6 months · verified by an in-app agreement"});
 Object.assign(EN_EXACT,{"พีเพิล เพลส พระราม 9": "People Place Rama 9", "เดอะ แคนวาส ลาดพร้าว": "The Canvas Lat Phrao", "สวนดอกเพลส": "Suan Dok Place", "บ้านสวนเกษตร": "Baan Suan Kaset", "หอพักกังสดาล เรสซิเดนซ์": "Kangsadan Residence dorm", "กะทู้ เฮาส์": "Kathu House", "ซีวิว ศรีราชา": "Sea View Sriracha", "ซอยนิมมาน 9": "Soi Nimman 9", "นิติบุคคล พีเพิล": "People building office", "นิติบุคคล บ้านสวนเกษตร": "Baan Suan Kaset office", "นิติบุคคล สวนดอกเพลส": "Suan Dok Place office", "นิติบุคคล หอพักกังสดาล": "Kangsadan dorm office", "คอนโดลาดพร้าว ฝ่ายเช่า": "Lat Phrao Condo leasing desk", "ชวนเช่า พีเพิล เพลส พระราม 9": "Rent together at People Place Rama 9", "ชวนเช่า สวนดอกเพลส": "Rent together at Suan Dok Place", "ชวนเช่า เดอะ แคนวาส ลาดพร้าว": "Rent together at The Canvas Lat Phrao", "ม.บูรพา": "Burapha University", "บริษัทแถวจตุจักร": "Company near Chatuchak", "บริษัทแถวอารีย์": "Company near Ari", "ออฟฟิศเอกมัย": "Office in Ekkamai", "ออฟฟิศแถวพระราม 9": "Office near Rama 9", "โรงแรมแถวฉลอง": "Hotel near Chalong", "โรงพยาบาลแถวรามคำแหง": "Hospital near Ramkhamhaeng", "มหาวิทยาลัยแถวสามย่าน": "University near Sam Yan", "มหาวิทยาลัยแถวบางเขน": "University near Bang Khen", "ทำงานที่บ้าน": "Works from home", "ทำงานที่บ้าน (กราฟิก)": "Works from home (graphics)", "ทำงานรีโมต": "Remote work", "1 ห้องนอน 35 ตร.ม. หารครึ่ง": "1-bedroom, 35 sq m, split in half", "1 ห้องนอนในซอยอารีย์": "1-bedroom in a quiet Ari soi", "คอนโด 2 ห้องนอน หาคนแชร์ 1 ห้อง": "2-bedroom condo, 1 room to share", "คอนโดติด BTS อโศก": "Condo right by BTS Asok", "คอนโดติด MRT ลาดพร้าว": "Condo right by MRT Lat Phrao", "คอนโดใกล้ MRT แคราย หาคนหารครึ่ง": "Condo near MRT Khae Rai, split in half", "คอนโดใกล้ มช. หารครึ่ง": "Condo near Chiang Mai University, split in half", "คอนโดในเมืองภูเก็ต หารครึ่ง": "Condo in Phuket Town, split in half", "ทาวน์โฮม 3 ชั้น ว่าง 1 จาก 3 ห้อง": "3-storey townhome, 1 of 3 rooms free", "ทาวน์โฮมแถวลำสาลี ว่าง 2 ห้อง": "Townhome near Lam Sali, 2 rooms free", "ทาวน์โฮมให้เช่า แคราย": "Townhome for rent in Khae Rai", "บ้านเดี่ยว 2 ชั้น หาเพื่อนร่วมบ้าน 2 คน": "2-storey house, looking for 2 housemates", "บ้านไม้ในเมืองเก่า ว่าง 1 จาก 3 ห้อง": "Wooden house in the old town, 1 of 3 rooms free", "แชร์เฮาส์ในซอยรามคำแหง ว่าง 1 เตียง": "Share house off Ramkhamhaeng, 1 bed free", "หอพักใกล้แอร์พอร์ตลิงก์ รามคำแหง": "Dorm near Airport Rail Link Ramkhamhaeng", "หอพักหน้า มข. หาเพื่อนหาร": "Dorm by Khon Kaen University, looking for a roommate", "หอพักหน้ามหาวิทยาลัย มีห้องคู่": "Dorm in front of the university, twin rooms", "หอพักใกล้ BTS เสนานิคม": "Dorm near BTS Sena Nikhom", "หอพักใกล้ ม.บูรพา หาคนหาร": "Dorm near Burapha University, looking for a roommate", "อพาร์ตเมนต์ ใกล้ MRT ห้วยขวาง": "Apartment near MRT Huai Khwang", "อพาร์ตเมนต์ใกล้ BTS สะพานควาย": "Apartment near BTS Saphan Khwai", "อพาร์ตเมนต์ใกล้ BTS อนุสาวรีย์ฯ": "Apartment near BTS Victory Monument", "อพาร์ตเมนต์ใกล้ MRT ศรีนุช": "Apartment near MRT Si Nut", "อพาร์ตเมนต์ใกล้รถไฟฟ้าสายสีแดง หลักหก": "Apartment near the Red Line, Lak Hok", "หาเพื่อนผู้หญิงเช่าห้องคู่ใกล้ มช. ด้วยกัน": "Looking for a female friend to share a twin room near CMU", "หาเพื่อนอีก 2 คน เช่าบ้านใกล้ทะเลบางแสน": "Looking for 2 more friends to rent a house near Bang Saen beach", "ตู้เย็น 2 ประตู ใช้งานปกติ": "2-door fridge, works fine", "ที่นอน 3.5 ฟุต": "3.5 ft mattress", "ราวตากผ้า + ไม้แขวน 30 อัน": "Clothes rack + 30 hangers", "ไมโครเวฟ 20 ลิตร": "20-litre microwave", "โต๊ะทำงาน + เก้าอี้": "Desk + chair", "พัดลมตั้งพื้น 16 นิ้ว": "16-inch floor fan", "โซฟา 2 ที่นั่ง": "2-seat sofa", "ต้องมารับเอง ชั้น 5 มีลิฟต์": "Pick up yourself, 5th floor with a lift", "ต้องมีรถมารับ": "You need a vehicle to collect it", "ย้ายออกวันเสาร์ มารับก่อนนั้น": "Moving out Saturday, collect before then", "วางไว้ที่ล็อบบี้ นัดเวลาก่อน": "Left in the lobby, arrange a time first", "มีรถกระบะช่วยส่งในกะทู้": "Pickup truck can deliver within Kathu", "ขนย้ายหอพัก 24 ชม.": "Dorm moving, 24 hrs", "รับดูห้องแทน by ปุ๊ก": "Room viewing on your behalf by Puk", "แม่บ้านใจดี คลีนนิ่ง": "Jaidee Cleaning", "ช่างนัท แอร์และเครื่องใช้ไฟฟ้า": "Nat's air-con & appliance repair", "ระบบจะแจ้งเตือนก่อนครบ 7 วัน กด \"ยืนยันว่ายังหาอยู่\" ได้จากหน้าโพสต์ของฉันหรือจากการแจ้งเตือน ช่วยให้ทุกคนเห็นแต่ประกาศที่ยังว่างจริง": "We remind you before the 7 days are up. Tap \"Confirm I'm still looking\" on My posts or in the notification, so everyone only sees listings that are really available.", "2 ห้องนอน เหมาะกับเพื่อนสองคนเช่าด้วยกัน ห้องนอนขนาดเท่ากัน": "2 bedrooms of equal size, ideal for two friends renting together", "ทาวน์โฮม 3 ห้องนอน เหมาะกับเพื่อน 3–4 คนหรือครอบครัว": "3-bedroom townhome for 3–4 friends or a family", "บ้าน 3 ห้องนอนใกล้ป่าตอง เหมาะกับคนทำงานท่องเที่ยว 3 คน": "3-bedroom house near Patong, ideal for 3 people working in tourism", "วิวทะเล 2 ห้องนอน เหมาะกับคนทำงานนิคมฯ สองคน": "Sea-view 2-bedroom, ideal for two industrial-estate workers", "บ้านในซอย ไม่ติดรถไฟฟ้า มีรถเมล์และสองแถวปากซอย มีลานบ้าน เด็กเล็กอยู่ได้": "House in a soi, not near the train but buses and songthaews at the corner, with a yard; small children welcome", "บ้านไม้เก่า มีสวนหลังบ้าน เปิดร้านกาแฟเล็ก ๆ": "Old wooden house with a back garden and a small café", "ห้องสตูดิโอเตียงแยก ให้อยู่ 2 คนได้ สัญญาขั้นต่ำ 6 เดือน": "Studio with two beds for 2 people, 6-month minimum lease", "หอพักใกล้มหาวิทยาลัย มีห้องเตียงแยกให้อยู่ 2 คน": "Dorm near the university with twin-bed rooms for 2", "ห้องเตียงแยกใกล้ มช. นักศึกษาหารกัน 2 คนได้": "Twin-bed room near CMU, 2 students can split it", "ห้องพร้อมอยู่": "Ready to move in", "เล็งคอนโด 2 ห้องนอนไว้แล้ว ค่าห้อง 16,000 หาเพื่อนอีก 1 คนไปดูห้องและเซ็นสัญญาด้วยกัน": "Already eyeing a 2-bedroom condo at 16,000. Looking for 1 more friend to view it and sign together", "ดูห้องไว้แล้ว ห้องเตียงแยก 9,500 หาคนเซ็นสัญญาร่วม ด่วนภายในเดือนนี้": "Already viewed a twin-bed room at 9,500, need someone to co-sign, urgent this month", "อยากเช่าบ้านทั้งหลังกับเพื่อน 3 คน ยังไม่มีบ้านในใจ หาคนไปดูหลาย ๆ ที่ด้วยกัน": "Want to rent a whole house with 3 friends, no house in mind yet, looking for people to view several places together", "คุณแม่เลี้ยงเดี่ยว มีลูกสาว 4 ขวบ ทำงานพยาบาลสลับกะ ขอบ้านที่รับเด็กได้": "Single mum with a 4-year-old daughter, nurse on rotating shifts, needs a child-friendly home", "งบจำกัด ไม่ติดรถไฟฟ้าก็ได้ ปั่นจักรยานไปเรียน": "Tight budget, doesn't need to be near the train, cycles to class", "ทำงานกระทรวงแถวนนทบุรี กลับบ้านเสาร์อาทิตย์": "Works at a ministry in Nonthaburi, goes home at weekends", "ทำงานกลางคืน กลับตี 3–4 นอนกลางวัน อยากได้ห้องนอนแยกที่เงียบ": "Works nights, home at 3–4 am, sleeps by day, wants a quiet separate bedroom", "ทำงานกลางคืน กลับเช้า นอนกลางวัน ต้องการคนเงียบช่วงกลางวัน รีบหาภายในสัปดาห์นี้": "Works nights, home in the morning, sleeps by day, needs quiet daytime, looking this week", "ทำงานรีโมต ชอบคาเฟ่ ใกล้ถนนนิมมาน": "Remote worker, likes cafés, near Nimman Road", "ทำงานสลับกะ ไม่ทำอาหาร Wi-Fi รวมค่าห้องแล้ว ทดลองอยู่ 1 สัปดาห์ก่อนได้": "Shift worker, doesn't cook, Wi-Fi included in rent, 1-week trial stay possible", "ทำงานออนไลน์ อยู่บ้านเยอะ ใกล้ห้างและท่าเรือคลองแสนแสบ": "Works online, home a lot, near the mall and Saen Saep canal pier", "ทำงานออฟฟิศแถวพระราม 9 ห้องแยกนอนคนละห้อง ใช้ห้องนั่งเล่นร่วมกัน": "Office worker near Rama 9, separate bedrooms, shared living room", "ทำงานแถวพร้อมพงษ์ นั่ง BTS ทุกวัน ทำอาหารบ้าง": "Works near Phrom Phong, takes the BTS daily, cooks sometimes", "ทำงานแถวอโศก ชอบออกกำลังกาย ห้องสะอาด ไม่สูบบุหรี่": "Works near Asok, likes exercise, tidy, non-smoker", "ทำงานโรงแรม สลับกะ": "Hotel worker, rotating shifts", "ทำงานโรงแรม สลับกะ อยากได้ห้องนอนแยก": "Hotel worker on rotating shifts, wants a separate bedroom", "นักศึกษา ชอบทำอาหาร แชร์กันกินได้": "Student who likes cooking and sharing meals", "นักศึกษา หาคนหารห้อง ประหยัด": "Student looking to split a room and save", "นักศึกษาปี 2 เรียนเช้า กลับห้องเย็น": "2nd-year student, morning classes, back in the evening", "ป.โท อ่านหนังสือดึก แต่เงียบ": "Master's student, studies late but quietly", "ปี 1 หาเพื่อนหารหอหน้ามหาลัย": "1st-year looking for a roommate in a dorm by campus", "ฝึกงาน 4 เดือน หาห้องระยะสั้น ไม่ใช้แอร์": "4-month internship, short stay, doesn't use air-con", "ฟรีแลนซ์กราฟิก ประชุมออนไลน์บางวัน มีแมว 1 ตัว": "Freelance designer, online meetings some days, has 1 cat", "มีรถ จอดได้ 1 คัน ทำงานแถวบางนา": "Has a car, needs 1 parking spot, works near Bang Na", "มีรถยนต์ ต้องการที่จอด 1 คัน": "Has a car, needs 1 parking spot", "มีแมว 1 ตัว ทำงานที่บ้านบางวัน ทดลองอยู่ด้วยกันก่อน 2 เดือนได้": "Has 1 cat, works from home some days, happy to try living together for 2 months first", "ย้ายจากกรุงเทพฯ มาทำงานรีโมตที่เชียงใหม่ 6 เดือน": "Moving from Bangkok to work remotely in Chiang Mai for 6 months", "ย้ายมาทำงานกรุงเทพฯ อยากได้ห้องใกล้รถไฟฟ้า พร้อมเข้าอยู่สิ้นเดือนหน้า": "Moving to Bangkok for work, wants a room near the train, ready to move in at the end of next month", "ห้องเล็กแต่ครบ นักศึกษาปี 4 กลับห้องไม่ดึก": "Small but complete room, 4th-year student, not home late", "อยู่กัน 2 คน หาคนที่ 3 ห้องนอนแยก ห้องน้ำในตัว": "Two of us, looking for a third, separate bedroom with en-suite", "อยู่กัน 4 คน มีตารางทำความสะอาดชัดเจน ไม่ติดรถไฟฟ้า มีวินและรถเมล์หน้าซอย": "Four of us with a clear cleaning rota, not near the train, motorbike taxis and buses at the soi entrance", "เดินทางสะดวก ใกล้รถตู้ รถเมล์": "Easy to get around, near vans and buses", "เรียนปี 4 นั่งรถเมล์ได้": "4th-year student, fine with taking the bus", "ใกล้ตลาดห้วยขวาง ของกินเยอะ ชอบห้องเงียบ": "Near Huai Khwang market with lots of food, likes a quiet room", "ใกล้ทะเลบางแสน ชอบออกไปวิ่งตอนเย็น": "Near Bang Saen beach, likes an evening run", "ใกล้มหาวิทยาลัย เดินทางเข้าเมืองด้วยสายสีแดง": "Near the university, takes the Red Line into town", "ใกล้ห้าง ทำงานกะเช้า": "Near the mall, works morning shifts", "แมว 1 ตัว · แมวไทย ขนสั้น นิสัยเชื่อง ทำหมันแล้ว": "1 cat · Thai shorthair, gentle, neutered", "ผู้ประกาศ: แมว 1 ตัว · แมวไทย ขนสั้น นิสัยเชื่อง ทำหมันแล้ว": "Poster: 1 cat · Thai shorthair, gentle, neutered", "บุหรี่ / บุหรี่ไฟฟ้า, อาหารกลิ่นแรง": "Cigarettes / vapes, strong-smelling food", "อาหารกลิ่นแรง": "Strong-smelling food", "เจ้าของห้อง": "Room owner", "ภาษา / Language": "Language", "ดูภาพรวมทั้ง 5 แบบในหน้าแนะนำ": "See all five on the intro page", "· สูงสุด 10 รูป รูปแรกจะใช้เป็นภาพปก": "· up to 10 photos, the first is the cover", "รอคุณตอบ แจ้งผลภายใน 3 วันตามที่ประกาศไว้": "Waiting for your reply: answer within 3 days as stated in your listing", "กด \"ยืนยันว่ายังหาอยู่\" ทุก 7 วัน ระบบจะแจ้งเตือนก่อนครบ ถ้าไม่ยืนยันประกาศจะถูกซ่อน": "Tap \"Confirm I'm still looking\" every 7 days. We remind you before then; unconfirmed listings are hidden", "ยืนยันล่าสุด เมื่อสักครู่ (เหลือ 7 วัน)": "last confirmed just now (7 days left)", "หาคนที่สนใจย่านหรือตึกเดียวกัน ไปดูห้องหรือเซ็นสัญญาเช่าด้วยกัน ระบบจับคู่คนที่งบและไลฟ์สไตล์ใกล้กัน และแนะนำห้องว่างให้เช่าที่เหมาะกับทั้งคู่": "Find people interested in the same area or building to view rooms or sign a lease together. We match people with similar budgets and lifestyles and suggest rooms for rent that suit everyone.", "ความถี่ทำความสะอาดต่างกัน": "Different cleaning frequency", "2–3 ครั้ง/สัปดาห์": "2–3 times a week", "เดือนละครั้ง": "once a month", "เมื่อเริ่มรก": "when it gets messy", "ความเสี่ยงน้ำขังปานกลาง": "Medium flood risk", "ความเสี่ยงน้ำขังสูง": "High flood risk", "ซอยลึกบางซอยน้ำขัง 30 นาที": "some deep sois flood for 30 minutes", "ซอยแคบบางซอยน้ำขัง 30–60 นาที": "some narrow sois flood for 30–60 minutes", "น้ำขังเป็นจุด ๆ ในซอย ระบายได้ภายใน 1 ชม.": "puddles in spots along the soi, drains within 1 hour", "น้ำขังในซอยย่อย 30–60 นาทีหลังฝนหนัก ถนนใหญ่ระบายได้": "side sois flood 30–60 minutes after heavy rain; main roads drain", "บางซอยน้ำขังนานกว่า 1 ชม. ควรถามชั้นที่พักและเส้นทางเลี่ยง": "some sois flood for over an hour; ask about the floor and detour routes", "นักศึกษา · 1 ปี": "Student · 1 yr", "นักศึกษา · 2 ปี": "Student · 2 yr", "ลูก 1 คน · 4 ขวบ": "1 child · age 4", "ขอจองได้ไหมคะ มารับวันอาทิตย์": "Can I reserve it? I'll pick up on Sunday", "ขอดูรูปห้องน้ำเพิ่มได้ไหมคะ": "Could I see more photos of the bathroom?", "ขอบคุณที่เตือนครับ เพิ่งเจอคนแบบนี้ทักมา": "Thanks for the warning, someone like this just messaged me", "ที่จอดรถยนต์ว่างไหมครับ": "Is there a free car parking spot?", "บ้านเรารับเด็กได้ค่ะ มีลานให้เล่น ทักแชทมาได้เลย": "Our house welcomes children and has a yard to play in. Message us anytime", "มีค่ะ ห้องละเครื่อง ค่าไฟแยกมิเตอร์ย่อย": "Yes, one unit per room, electricity on separate sub-meters", "ยังอยู่ไหมครับ": "Is this still available?", "สนใจตึกนี้เหมือนกันค่ะ เสาร์นี้ไปดูด้วยกันไหม": "I'm interested in this building too. Shall we view it together this Saturday?", "สัญญา 6 เดือนต่อได้ไหมคะ": "Can a 6-month lease be renewed?", "ห้องนอนสองห้องขนาดเท่ากันจริงไหมคะ": "Are the two bedrooms really the same size?", "ห้องนอนแยกมีแอร์ทั้งสองห้องไหมคะ": "Do both bedrooms have air-con?", "ห้องนี้ให้จอดมอเตอร์ไซค์ฟรีใช่ไหมครับ": "Is motorbike parking free here?", "ห้องแถวลาดพร้าวสนใจไหมคะ ใกล้ MRT 200 ม.": "Interested in a room in Lat Phrao? 200 m from the MRT", "เชื่องมากค่ะ ถ้ามาด้วยกันต้องลองให้เจอกันก่อน": "Very gentle. If you bring yours, let's have them meet first", "เท่ากันครับ มีตู้เสื้อผ้าห้องละใบ": "Yes, the same, with a wardrobe in each", "แมวเชื่องไหมครับ ผมก็มีแมว 1 ตัว": "Is the cat friendly? I have a cat too", "ได้รูมเมทแล้ว ขอบคุณทุกคนที่สนใจ": "Found a roommate, thanks everyone", "ได้ห้องแล้ว ขอบคุณค่ะ": "Found a room, thank you", "“งบพอได้ อยากได้ห้องนอนแยก”": "“Budget is fine, want a separate bedroom”", "“ช่วยได้มากตอนอยู่ต่างจังหวัด”": "“A big help while I was upcountry”", "“ซอยร่มรื่น ร้านกินเยอะ”": "“Leafy soi with lots of places to eat”", "“ซ่อมตู้เย็นจบในครั้งเดียว”": "“Fixed the fridge in one visit”", "“ตอบไว นัดดูห้องได้ภายในวันเดียว”": "“Quick to reply, viewing arranged the same day”", "“ทำงานที่บ้าน ขอดูห้องก่อนตัดสินใจ”": "“I work from home, would like to view first”", "“ทำเลดีมากแต่ช่วงเย็นเสียงถนนดัง”": "“Great location but traffic is loud in the evening”", "“น่ารัก แมวเชื่องมาก ห้องมีกลิ่นน้อย”": "“Lovely, the cat is very gentle and the room barely smells”", "“บ้านกว้าง เพื่อนบ้านดี”": "“Spacious house, nice neighbours”", "“บ้านอบอุ่น แบ่งค่าใช้จ่ายโปร่งใส”": "“Warm home, costs split transparently”", "“มากัน 2 คน พร้อมเซ็นสัญญาเดือนหน้า”": "“Two of us, ready to sign next month”", "“มาช้านิดหน่อยแต่งานดี”": "“A little late but good work”", "“ล้างแอร์สะอาด ราคาตามที่บอก”": "“Cleaned the air-con well, price as quoted”", "“วิดีโอละเอียดมาก ถ่ายห้องน้ำ ระเบียง ถามนิติให้ด้วย”": "“Very detailed video of the bathroom and balcony, even asked the office for me”", "“สนใจตึกเดียวกัน ไปดูห้องได้เสาร์นี้”": "“Interested in the same building, can view this Saturday”", "“สนใจห้อง แต่ต้องหารูมเมทมาหารด้วย”": "“Interested, but I need a roommate to split it”", "“สะอาด มาตรงเวลา”": "“Clean and on time”", "“สะอาดมาก ตรงเวลาเรื่องเงิน คุยง่าย”": "“Very clean, pays on time, easy to talk to”", "“ส่วนกลางสะอาด สระว่ายน้ำดี”": "“Clean common areas, nice pool”", "“ห่อของดี ของไม่เสียหาย”": "“Packed well, nothing damaged”", "“ห้องตรงรูป ส่วนกลางดี”": "“Room matches the photos, good facilities”", "“เจ้าของตอบไว ซ่อมให้เร็ว”": "“Owner replies fast and fixes things quickly”", "“เจ้าของบ้านใจดี บ้านกว้าง ลูกวิ่งเล่นได้”": "“Kind landlord, roomy house, my child can run around”", "“เดินไป มช. ได้”": "“Walking distance to CMU”", "“แบ่งของใช้ร่วมชัดเจน ไม่เคยมีปัญหา”": "“Shared items split clearly, never a problem”", "“แม่และลูกเล็ก 4 ขวบ ถามเรื่องเลี้ยงเด็กได้ไหม”": "“Mum with a 4-year-old, asking if children are OK”", "“โปรเจกต์ 4 เดือน”": "“4-month project”", "“ใกล้ MRT มาก นิติดูแลดี”": "“Very close to the MRT, well-run building”", "“ใกล้ MRT แต่ลิฟต์รอนาน”": "“Near the MRT but long waits for the lift”", "“ไม่ติดรถไฟฟ้าแต่รถเมล์ผ่านหน้าซอย”": "“Not by the train but buses pass the soi”", "คะแนน": "Rating", "อัปโหลดรูปของคุณเอง": "Upload your own photo", "แถว": "near"});Object.assign(EN_PHRASE,{"พีเพิล เพลส พระราม 9": "People Place Rama 9", "เดอะ แคนวาส ลาดพร้าว": "The Canvas Lat Phrao", "สวนดอกเพลส": "Suan Dok Place", "บ้านสวนเกษตร": "Baan Suan Kaset", "หอพักกังสดาล เรสซิเดนซ์": "Kangsadan Residence dorm", "กะทู้ เฮาส์": "Kathu House", "ซีวิว ศรีราชา": "Sea View Sriracha", "ซอยนิมมาน 9": "Soi Nimman 9", "นิติบุคคล พีเพิล": "People building office", "นิติบุคคล บ้านสวนเกษตร": "Baan Suan Kaset office", "นิติบุคคล สวนดอกเพลส": "Suan Dok Place office", "นิติบุคคล หอพักกังสดาล": "Kangsadan dorm office", "คอนโดลาดพร้าว ฝ่ายเช่า": "Lat Phrao Condo leasing desk", "ชวนเช่า พีเพิล เพลส พระราม 9": "Rent together at People Place Rama 9", "ชวนเช่า สวนดอกเพลส": "Rent together at Suan Dok Place", "ชวนเช่า เดอะ แคนวาส ลาดพร้าว": "Rent together at The Canvas Lat Phrao", "ม.บูรพา": "Burapha University", "บริษัทแถวจตุจักร": "Company near Chatuchak", "บริษัทแถวอารีย์": "Company near Ari", "ออฟฟิศเอกมัย": "Office in Ekkamai", "ออฟฟิศแถวพระราม 9": "Office near Rama 9", "โรงแรมแถวฉลอง": "Hotel near Chalong", "โรงพยาบาลแถวรามคำแหง": "Hospital near Ramkhamhaeng", "มหาวิทยาลัยแถวสามย่าน": "University near Sam Yan", "มหาวิทยาลัยแถวบางเขน": "University near Bang Khen", "ทำงานที่บ้าน": "Works from home", "ทำงานที่บ้าน (กราฟิก)": "Works from home (graphics)", "ทำงานรีโมต": "Remote work", "1 ห้องนอน 35 ตร.ม. หารครึ่ง": "1-bedroom, 35 sq m, split in half", "1 ห้องนอนในซอยอารีย์": "1-bedroom in a quiet Ari soi", "คอนโด 2 ห้องนอน หาคนแชร์ 1 ห้อง": "2-bedroom condo, 1 room to share", "คอนโดติด BTS อโศก": "Condo right by BTS Asok", "คอนโดติด MRT ลาดพร้าว": "Condo right by MRT Lat Phrao", "คอนโดใกล้ MRT แคราย หาคนหารครึ่ง": "Condo near MRT Khae Rai, split in half", "คอนโดใกล้ มช. หารครึ่ง": "Condo near Chiang Mai University, split in half", "คอนโดในเมืองภูเก็ต หารครึ่ง": "Condo in Phuket Town, split in half", "ทาวน์โฮม 3 ชั้น ว่าง 1 จาก 3 ห้อง": "3-storey townhome, 1 of 3 rooms free", "ทาวน์โฮมแถวลำสาลี ว่าง 2 ห้อง": "Townhome near Lam Sali, 2 rooms free", "ทาวน์โฮมให้เช่า แคราย": "Townhome for rent in Khae Rai", "บ้านเดี่ยว 2 ชั้น หาเพื่อนร่วมบ้าน 2 คน": "2-storey house, looking for 2 housemates", "บ้านไม้ในเมืองเก่า ว่าง 1 จาก 3 ห้อง": "Wooden house in the old town, 1 of 3 rooms free", "แชร์เฮาส์ในซอยรามคำแหง ว่าง 1 เตียง": "Share house off Ramkhamhaeng, 1 bed free", "หอพักใกล้แอร์พอร์ตลิงก์ รามคำแหง": "Dorm near Airport Rail Link Ramkhamhaeng", "หอพักหน้า มข. หาเพื่อนหาร": "Dorm by Khon Kaen University, looking for a roommate", "หอพักหน้ามหาวิทยาลัย มีห้องคู่": "Dorm in front of the university, twin rooms", "หอพักใกล้ BTS เสนานิคม": "Dorm near BTS Sena Nikhom", "หอพักใกล้ ม.บูรพา หาคนหาร": "Dorm near Burapha University, looking for a roommate", "อพาร์ตเมนต์ ใกล้ MRT ห้วยขวาง": "Apartment near MRT Huai Khwang", "อพาร์ตเมนต์ใกล้ BTS สะพานควาย": "Apartment near BTS Saphan Khwai", "อพาร์ตเมนต์ใกล้ BTS อนุสาวรีย์ฯ": "Apartment near BTS Victory Monument", "อพาร์ตเมนต์ใกล้ MRT ศรีนุช": "Apartment near MRT Si Nut", "อพาร์ตเมนต์ใกล้รถไฟฟ้าสายสีแดง หลักหก": "Apartment near the Red Line, Lak Hok", "หาเพื่อนผู้หญิงเช่าห้องคู่ใกล้ มช. ด้วยกัน": "Looking for a female friend to share a twin room near CMU", "หาเพื่อนอีก 2 คน เช่าบ้านใกล้ทะเลบางแสน": "Looking for 2 more friends to rent a house near Bang Saen beach", "ตู้เย็น 2 ประตู ใช้งานปกติ": "2-door fridge, works fine", "ที่นอน 3.5 ฟุต": "3.5 ft mattress", "ราวตากผ้า + ไม้แขวน 30 อัน": "Clothes rack + 30 hangers", "ไมโครเวฟ 20 ลิตร": "20-litre microwave", "โต๊ะทำงาน + เก้าอี้": "Desk + chair", "พัดลมตั้งพื้น 16 นิ้ว": "16-inch floor fan", "โซฟา 2 ที่นั่ง": "2-seat sofa", "ต้องมารับเอง ชั้น 5 มีลิฟต์": "Pick up yourself, 5th floor with a lift", "ต้องมีรถมารับ": "You need a vehicle to collect it", "ย้ายออกวันเสาร์ มารับก่อนนั้น": "Moving out Saturday, collect before then", "วางไว้ที่ล็อบบี้ นัดเวลาก่อน": "Left in the lobby, arrange a time first", "มีรถกระบะช่วยส่งในกะทู้": "Pickup truck can deliver within Kathu", "ขนย้ายหอพัก 24 ชม.": "Dorm moving, 24 hrs", "รับดูห้องแทน by ปุ๊ก": "Room viewing on your behalf by Puk", "แม่บ้านใจดี คลีนนิ่ง": "Jaidee Cleaning", "ช่างนัท แอร์และเครื่องใช้ไฟฟ้า": "Nat's air-con & appliance repair", "ระบบจะแจ้งเตือนก่อนครบ 7 วัน กด \"ยืนยันว่ายังหาอยู่\" ได้จากหน้าโพสต์ของฉันหรือจากการแจ้งเตือน ช่วยให้ทุกคนเห็นแต่ประกาศที่ยังว่างจริง": "We remind you before the 7 days are up. Tap \"Confirm I'm still looking\" on My posts or in the notification, so everyone only sees listings that are really available.", "2 ห้องนอน เหมาะกับเพื่อนสองคนเช่าด้วยกัน ห้องนอนขนาดเท่ากัน": "2 bedrooms of equal size, ideal for two friends renting together", "ทาวน์โฮม 3 ห้องนอน เหมาะกับเพื่อน 3–4 คนหรือครอบครัว": "3-bedroom townhome for 3–4 friends or a family", "บ้าน 3 ห้องนอนใกล้ป่าตอง เหมาะกับคนทำงานท่องเที่ยว 3 คน": "3-bedroom house near Patong, ideal for 3 people working in tourism", "วิวทะเล 2 ห้องนอน เหมาะกับคนทำงานนิคมฯ สองคน": "Sea-view 2-bedroom, ideal for two industrial-estate workers", "บ้านในซอย ไม่ติดรถไฟฟ้า มีรถเมล์และสองแถวปากซอย มีลานบ้าน เด็กเล็กอยู่ได้": "House in a soi, not near the train but buses and songthaews at the corner, with a yard; small children welcome", "บ้านไม้เก่า มีสวนหลังบ้าน เปิดร้านกาแฟเล็ก ๆ": "Old wooden house with a back garden and a small café", "ห้องสตูดิโอเตียงแยก ให้อยู่ 2 คนได้ สัญญาขั้นต่ำ 6 เดือน": "Studio with two beds for 2 people, 6-month minimum lease", "หอพักใกล้มหาวิทยาลัย มีห้องเตียงแยกให้อยู่ 2 คน": "Dorm near the university with twin-bed rooms for 2", "ห้องเตียงแยกใกล้ มช. นักศึกษาหารกัน 2 คนได้": "Twin-bed room near CMU, 2 students can split it", "ห้องพร้อมอยู่": "Ready to move in", "เล็งคอนโด 2 ห้องนอนไว้แล้ว ค่าห้อง 16,000 หาเพื่อนอีก 1 คนไปดูห้องและเซ็นสัญญาด้วยกัน": "Already eyeing a 2-bedroom condo at 16,000. Looking for 1 more friend to view it and sign together", "ดูห้องไว้แล้ว ห้องเตียงแยก 9,500 หาคนเซ็นสัญญาร่วม ด่วนภายในเดือนนี้": "Already viewed a twin-bed room at 9,500, need someone to co-sign, urgent this month", "อยากเช่าบ้านทั้งหลังกับเพื่อน 3 คน ยังไม่มีบ้านในใจ หาคนไปดูหลาย ๆ ที่ด้วยกัน": "Want to rent a whole house with 3 friends, no house in mind yet, looking for people to view several places together", "คุณแม่เลี้ยงเดี่ยว มีลูกสาว 4 ขวบ ทำงานพยาบาลสลับกะ ขอบ้านที่รับเด็กได้": "Single mum with a 4-year-old daughter, nurse on rotating shifts, needs a child-friendly home", "งบจำกัด ไม่ติดรถไฟฟ้าก็ได้ ปั่นจักรยานไปเรียน": "Tight budget, doesn't need to be near the train, cycles to class", "ทำงานกระทรวงแถวนนทบุรี กลับบ้านเสาร์อาทิตย์": "Works at a ministry in Nonthaburi, goes home at weekends", "ทำงานกลางคืน กลับตี 3–4 นอนกลางวัน อยากได้ห้องนอนแยกที่เงียบ": "Works nights, home at 3–4 am, sleeps by day, wants a quiet separate bedroom", "ทำงานกลางคืน กลับเช้า นอนกลางวัน ต้องการคนเงียบช่วงกลางวัน รีบหาภายในสัปดาห์นี้": "Works nights, home in the morning, sleeps by day, needs quiet daytime, looking this week", "ทำงานรีโมต ชอบคาเฟ่ ใกล้ถนนนิมมาน": "Remote worker, likes cafés, near Nimman Road", "ทำงานสลับกะ ไม่ทำอาหาร Wi-Fi รวมค่าห้องแล้ว ทดลองอยู่ 1 สัปดาห์ก่อนได้": "Shift worker, doesn't cook, Wi-Fi included in rent, 1-week trial stay possible", "ทำงานออนไลน์ อยู่บ้านเยอะ ใกล้ห้างและท่าเรือคลองแสนแสบ": "Works online, home a lot, near the mall and Saen Saep canal pier", "ทำงานออฟฟิศแถวพระราม 9 ห้องแยกนอนคนละห้อง ใช้ห้องนั่งเล่นร่วมกัน": "Office worker near Rama 9, separate bedrooms, shared living room", "ทำงานแถวพร้อมพงษ์ นั่ง BTS ทุกวัน ทำอาหารบ้าง": "Works near Phrom Phong, takes the BTS daily, cooks sometimes", "ทำงานแถวอโศก ชอบออกกำลังกาย ห้องสะอาด ไม่สูบบุหรี่": "Works near Asok, likes exercise, tidy, non-smoker", "ทำงานโรงแรม สลับกะ": "Hotel worker, rotating shifts", "ทำงานโรงแรม สลับกะ อยากได้ห้องนอนแยก": "Hotel worker on rotating shifts, wants a separate bedroom", "นักศึกษา ชอบทำอาหาร แชร์กันกินได้": "Student who likes cooking and sharing meals", "นักศึกษา หาคนหารห้อง ประหยัด": "Student looking to split a room and save", "นักศึกษาปี 2 เรียนเช้า กลับห้องเย็น": "2nd-year student, morning classes, back in the evening", "ป.โท อ่านหนังสือดึก แต่เงียบ": "Master's student, studies late but quietly", "ปี 1 หาเพื่อนหารหอหน้ามหาลัย": "1st-year looking for a roommate in a dorm by campus", "ฝึกงาน 4 เดือน หาห้องระยะสั้น ไม่ใช้แอร์": "4-month internship, short stay, doesn't use air-con", "ฟรีแลนซ์กราฟิก ประชุมออนไลน์บางวัน มีแมว 1 ตัว": "Freelance designer, online meetings some days, has 1 cat", "มีรถ จอดได้ 1 คัน ทำงานแถวบางนา": "Has a car, needs 1 parking spot, works near Bang Na", "มีรถยนต์ ต้องการที่จอด 1 คัน": "Has a car, needs 1 parking spot", "มีแมว 1 ตัว ทำงานที่บ้านบางวัน ทดลองอยู่ด้วยกันก่อน 2 เดือนได้": "Has 1 cat, works from home some days, happy to try living together for 2 months first", "ย้ายจากกรุงเทพฯ มาทำงานรีโมตที่เชียงใหม่ 6 เดือน": "Moving from Bangkok to work remotely in Chiang Mai for 6 months", "ย้ายมาทำงานกรุงเทพฯ อยากได้ห้องใกล้รถไฟฟ้า พร้อมเข้าอยู่สิ้นเดือนหน้า": "Moving to Bangkok for work, wants a room near the train, ready to move in at the end of next month", "ห้องเล็กแต่ครบ นักศึกษาปี 4 กลับห้องไม่ดึก": "Small but complete room, 4th-year student, not home late", "อยู่กัน 2 คน หาคนที่ 3 ห้องนอนแยก ห้องน้ำในตัว": "Two of us, looking for a third, separate bedroom with en-suite", "อยู่กัน 4 คน มีตารางทำความสะอาดชัดเจน ไม่ติดรถไฟฟ้า มีวินและรถเมล์หน้าซอย": "Four of us with a clear cleaning rota, not near the train, motorbike taxis and buses at the soi entrance", "เดินทางสะดวก ใกล้รถตู้ รถเมล์": "Easy to get around, near vans and buses", "เรียนปี 4 นั่งรถเมล์ได้": "4th-year student, fine with taking the bus", "ใกล้ตลาดห้วยขวาง ของกินเยอะ ชอบห้องเงียบ": "Near Huai Khwang market with lots of food, likes a quiet room", "ใกล้ทะเลบางแสน ชอบออกไปวิ่งตอนเย็น": "Near Bang Saen beach, likes an evening run", "ใกล้มหาวิทยาลัย เดินทางเข้าเมืองด้วยสายสีแดง": "Near the university, takes the Red Line into town", "ใกล้ห้าง ทำงานกะเช้า": "Near the mall, works morning shifts", "แมว 1 ตัว · แมวไทย ขนสั้น นิสัยเชื่อง ทำหมันแล้ว": "1 cat · Thai shorthair, gentle, neutered", "ผู้ประกาศ: แมว 1 ตัว · แมวไทย ขนสั้น นิสัยเชื่อง ทำหมันแล้ว": "Poster: 1 cat · Thai shorthair, gentle, neutered", "บุหรี่ / บุหรี่ไฟฟ้า, อาหารกลิ่นแรง": "Cigarettes / vapes, strong-smelling food", "อาหารกลิ่นแรง": "Strong-smelling food", "เจ้าของห้อง": "Room owner", "ภาษา / Language": "Language", "ดูภาพรวมทั้ง 5 แบบในหน้าแนะนำ": "See all five on the intro page", "· สูงสุด 10 รูป รูปแรกจะใช้เป็นภาพปก": "· up to 10 photos, the first is the cover", "รอคุณตอบ แจ้งผลภายใน 3 วันตามที่ประกาศไว้": "Waiting for your reply: answer within 3 days as stated in your listing", "กด \"ยืนยันว่ายังหาอยู่\" ทุก 7 วัน ระบบจะแจ้งเตือนก่อนครบ ถ้าไม่ยืนยันประกาศจะถูกซ่อน": "Tap \"Confirm I'm still looking\" every 7 days. We remind you before then; unconfirmed listings are hidden", "ยืนยันล่าสุด เมื่อสักครู่ (เหลือ 7 วัน)": "last confirmed just now (7 days left)", "หาคนที่สนใจย่านหรือตึกเดียวกัน ไปดูห้องหรือเซ็นสัญญาเช่าด้วยกัน ระบบจับคู่คนที่งบและไลฟ์สไตล์ใกล้กัน และแนะนำห้องว่างให้เช่าที่เหมาะกับทั้งคู่": "Find people interested in the same area or building to view rooms or sign a lease together. We match people with similar budgets and lifestyles and suggest rooms for rent that suit everyone.", "ความถี่ทำความสะอาดต่างกัน": "Different cleaning frequency", "2–3 ครั้ง/สัปดาห์": "2–3 times a week", "เดือนละครั้ง": "once a month", "เมื่อเริ่มรก": "when it gets messy", "ความเสี่ยงน้ำขังปานกลาง": "Medium flood risk", "ความเสี่ยงน้ำขังสูง": "High flood risk", "ซอยลึกบางซอยน้ำขัง 30 นาที": "some deep sois flood for 30 minutes", "ซอยแคบบางซอยน้ำขัง 30–60 นาที": "some narrow sois flood for 30–60 minutes", "น้ำขังเป็นจุด ๆ ในซอย ระบายได้ภายใน 1 ชม.": "puddles in spots along the soi, drains within 1 hour", "น้ำขังในซอยย่อย 30–60 นาทีหลังฝนหนัก ถนนใหญ่ระบายได้": "side sois flood 30–60 minutes after heavy rain; main roads drain", "บางซอยน้ำขังนานกว่า 1 ชม. ควรถามชั้นที่พักและเส้นทางเลี่ยง": "some sois flood for over an hour; ask about the floor and detour routes", "นักศึกษา · 1 ปี": "Student · 1 yr", "นักศึกษา · 2 ปี": "Student · 2 yr", "ลูก 1 คน · 4 ขวบ": "1 child · age 4", "ขอจองได้ไหมคะ มารับวันอาทิตย์": "Can I reserve it? I'll pick up on Sunday", "ขอดูรูปห้องน้ำเพิ่มได้ไหมคะ": "Could I see more photos of the bathroom?", "ขอบคุณที่เตือนครับ เพิ่งเจอคนแบบนี้ทักมา": "Thanks for the warning, someone like this just messaged me", "ที่จอดรถยนต์ว่างไหมครับ": "Is there a free car parking spot?", "บ้านเรารับเด็กได้ค่ะ มีลานให้เล่น ทักแชทมาได้เลย": "Our house welcomes children and has a yard to play in. Message us anytime", "มีค่ะ ห้องละเครื่อง ค่าไฟแยกมิเตอร์ย่อย": "Yes, one unit per room, electricity on separate sub-meters", "ยังอยู่ไหมครับ": "Is this still available?", "สนใจตึกนี้เหมือนกันค่ะ เสาร์นี้ไปดูด้วยกันไหม": "I'm interested in this building too. Shall we view it together this Saturday?", "สัญญา 6 เดือนต่อได้ไหมคะ": "Can a 6-month lease be renewed?", "ห้องนอนสองห้องขนาดเท่ากันจริงไหมคะ": "Are the two bedrooms really the same size?", "ห้องนอนแยกมีแอร์ทั้งสองห้องไหมคะ": "Do both bedrooms have air-con?", "ห้องนี้ให้จอดมอเตอร์ไซค์ฟรีใช่ไหมครับ": "Is motorbike parking free here?", "ห้องแถวลาดพร้าวสนใจไหมคะ ใกล้ MRT 200 ม.": "Interested in a room in Lat Phrao? 200 m from the MRT", "เชื่องมากค่ะ ถ้ามาด้วยกันต้องลองให้เจอกันก่อน": "Very gentle. If you bring yours, let's have them meet first", "เท่ากันครับ มีตู้เสื้อผ้าห้องละใบ": "Yes, the same, with a wardrobe in each", "แมวเชื่องไหมครับ ผมก็มีแมว 1 ตัว": "Is the cat friendly? I have a cat too", "ได้รูมเมทแล้ว ขอบคุณทุกคนที่สนใจ": "Found a roommate, thanks everyone", "ได้ห้องแล้ว ขอบคุณค่ะ": "Found a room, thank you", "“งบพอได้ อยากได้ห้องนอนแยก”": "“Budget is fine, want a separate bedroom”", "“ช่วยได้มากตอนอยู่ต่างจังหวัด”": "“A big help while I was upcountry”", "“ซอยร่มรื่น ร้านกินเยอะ”": "“Leafy soi with lots of places to eat”", "“ซ่อมตู้เย็นจบในครั้งเดียว”": "“Fixed the fridge in one visit”", "“ตอบไว นัดดูห้องได้ภายในวันเดียว”": "“Quick to reply, viewing arranged the same day”", "“ทำงานที่บ้าน ขอดูห้องก่อนตัดสินใจ”": "“I work from home, would like to view first”", "“ทำเลดีมากแต่ช่วงเย็นเสียงถนนดัง”": "“Great location but traffic is loud in the evening”", "“น่ารัก แมวเชื่องมาก ห้องมีกลิ่นน้อย”": "“Lovely, the cat is very gentle and the room barely smells”", "“บ้านกว้าง เพื่อนบ้านดี”": "“Spacious house, nice neighbours”", "“บ้านอบอุ่น แบ่งค่าใช้จ่ายโปร่งใส”": "“Warm home, costs split transparently”", "“มากัน 2 คน พร้อมเซ็นสัญญาเดือนหน้า”": "“Two of us, ready to sign next month”", "“มาช้านิดหน่อยแต่งานดี”": "“A little late but good work”", "“ล้างแอร์สะอาด ราคาตามที่บอก”": "“Cleaned the air-con well, price as quoted”", "“วิดีโอละเอียดมาก ถ่ายห้องน้ำ ระเบียง ถามนิติให้ด้วย”": "“Very detailed video of the bathroom and balcony, even asked the office for me”", "“สนใจตึกเดียวกัน ไปดูห้องได้เสาร์นี้”": "“Interested in the same building, can view this Saturday”", "“สนใจห้อง แต่ต้องหารูมเมทมาหารด้วย”": "“Interested, but I need a roommate to split it”", "“สะอาด มาตรงเวลา”": "“Clean and on time”", "“สะอาดมาก ตรงเวลาเรื่องเงิน คุยง่าย”": "“Very clean, pays on time, easy to talk to”", "“ส่วนกลางสะอาด สระว่ายน้ำดี”": "“Clean common areas, nice pool”", "“ห่อของดี ของไม่เสียหาย”": "“Packed well, nothing damaged”", "“ห้องตรงรูป ส่วนกลางดี”": "“Room matches the photos, good facilities”", "“เจ้าของตอบไว ซ่อมให้เร็ว”": "“Owner replies fast and fixes things quickly”", "“เจ้าของบ้านใจดี บ้านกว้าง ลูกวิ่งเล่นได้”": "“Kind landlord, roomy house, my child can run around”", "“เดินไป มช. ได้”": "“Walking distance to CMU”", "“แบ่งของใช้ร่วมชัดเจน ไม่เคยมีปัญหา”": "“Shared items split clearly, never a problem”", "“แม่และลูกเล็ก 4 ขวบ ถามเรื่องเลี้ยงเด็กได้ไหม”": "“Mum with a 4-year-old, asking if children are OK”", "“โปรเจกต์ 4 เดือน”": "“4-month project”", "“ใกล้ MRT มาก นิติดูแลดี”": "“Very close to the MRT, well-run building”", "“ใกล้ MRT แต่ลิฟต์รอนาน”": "“Near the MRT but long waits for the lift”", "“ไม่ติดรถไฟฟ้าแต่รถเมล์ผ่านหน้าซอย”": "“Not by the train but buses pass the soi”", "คะแนน": "Rating", "อัปโหลดรูปของคุณเอง": "Upload your own photo", "แถว": "near"});
 Object.assign(EN_EXACT,{"เวอร์ชันทดลอง": "Beta", "ROOMER ยังไม่เปิดให้บริการ ข้อมูลตัวอย่างเป็นข้อมูลสมมติ โพสต์ที่คุณลงจะแสดงให้ผู้ทดลองคนอื่นเห็นด้วย อย่าใส่ข้อมูลส่วนตัวจริง": "ROOMER is not open yet. Sample data is made up. Posts you publish are visible to other testers, so don't enter real personal details.", "ส่งความเห็น": "Send feedback", "ส่งความเห็นเกี่ยวกับเว็บทดลอง": "Send feedback about the beta", "เล่าได้เลยว่าตรงไหนงง ใช้ยาก หรืออยากให้มีอะไรเพิ่ม ทีมงานอ่านทุกข้อความ": "Tell us what was confusing, hard to use or missing. We read every message.", "ภาพรวมให้กี่คะแนน": "Overall rating", "ความเห็น": "Feedback", "ช่องทางติดต่อกลับ": "Contact for a reply", "ไม่บังคับ": "optional", "เช่น หน้าลงประกาศขั้นที่ 3 ไม่รู้ว่าต้องกรอกอะไร": "e.g. on step 3 of posting I didn't know what to fill in", "อีเมลหรือ LINE ถ้าอยากให้ทีมงานติดต่อกลับ": "Email or LINE if you'd like a reply"});Object.assign(EN_PHRASE,{"เวอร์ชันทดลอง": "Beta", "ROOMER ยังไม่เปิดให้บริการ ข้อมูลตัวอย่างเป็นข้อมูลสมมติ โพสต์ที่คุณลงจะแสดงให้ผู้ทดลองคนอื่นเห็นด้วย อย่าใส่ข้อมูลส่วนตัวจริง": "ROOMER is not open yet. Sample data is made up. Posts you publish are visible to other testers, so don't enter real personal details.", "ส่งความเห็น": "Send feedback", "ส่งความเห็นเกี่ยวกับเว็บทดลอง": "Send feedback about the beta", "เล่าได้เลยว่าตรงไหนงง ใช้ยาก หรืออยากให้มีอะไรเพิ่ม ทีมงานอ่านทุกข้อความ": "Tell us what was confusing, hard to use or missing. We read every message.", "ภาพรวมให้กี่คะแนน": "Overall rating", "ความเห็น": "Feedback", "ช่องทางติดต่อกลับ": "Contact for a reply", "ไม่บังคับ": "optional", "เช่น หน้าลงประกาศขั้นที่ 3 ไม่รู้ว่าต้องกรอกอะไร": "e.g. on step 3 of posting I didn't know what to fill in", "อีเมลหรือ LINE ถ้าอยากให้ทีมงานติดต่อกลับ": "Email or LINE if you'd like a reply"});
